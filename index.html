@@ -275,7 +275,7 @@
             animate();
         }
 
-        // --- BUILD REAL 3D HUMANOID CHARACTER ---
+        // --- BUILD 3D HUMANOID CHARACTER ---
         function buildHumanoidCharacter() {
             // Clear existing mesh
             while (playerGroup.children.length > 0) {
@@ -284,9 +284,9 @@
 
             const isSekato = selectedCharacter === 'Sekato';
             const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa });
-            const hoodieMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0055ff : 0x111111 }); // Blue hoodie or Black cropped hoodie
+            const hoodieMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0055ff : 0x111111 });
             const pantsMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x111111 : 0x222222 });
-            const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 }); // White hair vs Black hair
+            const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 });
 
             // 1. Torso
             const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
@@ -345,7 +345,7 @@
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            // Town Buildings[span_1](start_span)[span_1](end_span)
+            // Town Buildings
             const colors = [0xff7b7b, 0xffd166, 0x06d6a0, 0x118ab2, 0x8338ec];
             for (let side = -1; side <= 1; side += 2) {
                 const bHeight = 16 + Math.random() * 18;
@@ -373,7 +373,7 @@
             const obsGroup = new THREE.Group();
 
             if (isTall) {
-                // Construction Barricade[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span)
+                // Construction Barricade
                 const barGeo = new THREE.BoxGeometry(2.4, 0.8, 0.4);
                 const barMat = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
                 const bar = new THREE.Mesh(barGeo, barMat);
@@ -464,7 +464,7 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                // --- RUNNING ANIMATION (SWING ARMS & LEGS) ---
+                // Running limb swinging animation
                 runAnimTime += forwardSpeed * 0.8;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping) {
                     leftArm.rotation.x = Math.sin(runAnimTime) * 0.6;
