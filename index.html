@@ -333,8 +333,8 @@
 
         let currentLane = 1;
         const laneX = [-3.2, 0, 3.2];
-        let forwardSpeed = 0.38;
-        const maxSpeed = 0.88;
+        let forwardSpeed = 0.48;     // FAST INITIAL FORWARD SPEED
+        const maxSpeed = 1.05;      // HIGH MAX RUNNING SPEED
         let distanceTraveled = 0;
         let coinsCollected = 0;
         let reviveCost = 20;
@@ -342,8 +342,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.09;
-        const jumpPower = 0.68;
+        const gravity = -0.14;       // FAST SNAPPY DOWNWARD GRAVITY
+        const jumpPower = 0.82;      // HIGH JUMP IMPULSE
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -510,7 +510,7 @@
                     osc.stop(audioCtx.currentTime + 0.18);
                     noteIdx = (noteIdx + 1) % notes.length;
                 } catch(e) {}
-            }, 200);
+            }, 180);
         }
 
         function stopBackgroundMusic() {
@@ -532,31 +532,31 @@
                 if (type === 'jump') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(220, now);
-                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
                     gain.gain.setValueAtTime(0.25, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    osc.start(now); osc.stop(now + 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now); osc.stop(now + 0.12);
                 } else if (type === 'roll') {
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(320, now);
-                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
+                    osc.frequency.exponentialRampToValueAtTime(110, now + 0.15);
                     gain.gain.setValueAtTime(0.25, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    osc.start(now); osc.stop(now + 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now); osc.stop(now + 0.15);
                 } else if (type === 'coin') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(987.77, now);
-                    osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                    osc.frequency.setValueAtTime(1318.51, now + 0.06);
                     gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-                    osc.start(now); osc.stop(now + 0.25);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'crash') {
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(180, now);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
                     gain.gain.setValueAtTime(0.35, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                    osc.start(now); osc.stop(now + 0.35);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
                 }
             } catch (e) {}
         }
@@ -633,24 +633,24 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FAST RESPONSIVE SWIPE CONTROLS
+            // ULTRA-SENSITIVE HIGH SPEED TOUCH GESTURES
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx < -15 && currentLane > 0) {
+                    if (dx < -8 && currentLane > 0) {
                         currentLane--;
-                    } else if (dx > 15 && currentLane < 2) {
+                    } else if (dx > 8 && currentLane < 2) {
                         currentLane++;
                     }
                 } else {
-                    if (dy < -15 && !isJumping && !isSliding) {
+                    if (dy < -8 && !isJumping && !isSliding) {
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
-                    } else if (dy > 15) {
+                    } else if (dy > 8) {
                         triggerSlide(); 
                     }
                 }
@@ -844,7 +844,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                const longDepth = 7.0;
+                const longDepth = 5.0;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
@@ -876,7 +876,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'car', depth: 4.5 };
             } else {
-                const tableDepth = 1.8; // SHORTENED TABLE DEPTH SO IT MATCHES THE FAST ROLL
+                const tableDepth = 1.0; // SHORT DEPTH FOR FAST SMOOTH SLIDING
                 const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
                 const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
                 const tableTop = new THREE.Mesh(topGeo, topMat);
@@ -923,7 +923,7 @@
                 characterMeshGroup.rotation.z = 0;
                 characterMeshGroup.position.y = 0;
                 playerGroup.position.y = 0;
-            }, 380);
+            }, 280); // ULTRA-FAST RECOVER SLIDE
         }
 
         function startGame() {
@@ -933,7 +933,7 @@
             gameState = 'PLAYING';
             distanceTraveled = 0;
             coinsCollected = 0;
-            forwardSpeed = 0.38;
+            forwardSpeed = 0.48;
             currentLane = 1;
             reviveCost = 20;
             
@@ -949,14 +949,14 @@
             if (gameState === 'MENU') {
                 playerGroup.rotation.y += 0.01;
             } else if (gameState === 'PLAYING') {
-                forwardSpeed = Math.min(forwardSpeed + 0.0001, maxSpeed);
+                forwardSpeed = Math.min(forwardSpeed + 0.00015, maxSpeed);
                 distanceTraveled += forwardSpeed * 0.1;
 
                 document.getElementById('dist-val').innerText = distanceTraveled.toFixed(1);
                 document.getElementById('coin-val').innerText = coinsCollected;
 
                 const targetX = laneX[currentLane];
-                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.65;
+                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.92; // NEAR INSTANT LANE SWITCH
 
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
@@ -971,7 +971,7 @@
                 }
 
                 if (isSliding) {
-                    rollAngle += 0.6;
+                    rollAngle += 0.8;
                     characterMeshGroup.rotation.x = rollAngle;
                     characterMeshGroup.rotation.z = 0;
                     playerGroup.position.y = 0;
@@ -982,7 +982,7 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                runAnimTime += forwardSpeed * 1.25;
+                runAnimTime += forwardSpeed * 1.5;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
                     leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
                     rightArm.rotation.x = -Math.sin(runAnimTime) * 0.75;
@@ -995,10 +995,10 @@
                 camera.position.y = 4.2;
                 
                 const targetCamX = playerGroup.position.x * 0.65;
-                camera.position.x += (targetCamX - camera.position.x) * 0.2;
+                camera.position.x += (targetCamX - camera.position.x) * 0.35;
                 
                 const targetRollTilt = -(playerGroup.position.x - targetX) * 0.08;
-                camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.15;
+                camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.25;
 
                 camera.lookAt(playerGroup.position.x * 0.75, 0.6, playerGroup.position.z + 7);
 
@@ -1029,7 +1029,7 @@
                     const obs = activeObstacles[i];
                     const depth = obs.userData.depth || 0.4;
                     
-                    if (Math.abs(obs.position.z - playerGroup.position.z) < (depth / 2 + 0.5) &&
+                    if (Math.abs(obs.position.z - playerGroup.position.z) < (depth / 2 + 0.4) &&
                         Math.abs(obs.position.x - playerGroup.position.x) < 1.1) {
                         
                         if (obs.userData.type === 'jump_only') {
