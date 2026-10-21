@@ -333,8 +333,8 @@
 
         let currentLane = 1;
         const laneX = [-3.2, 0, 3.2];
-        let forwardSpeed = 0.48;     // FAST INITIAL FORWARD SPEED
-        const maxSpeed = 1.05;      // HIGH MAX RUNNING SPEED
+        let forwardSpeed = 0.48;
+        const maxSpeed = 1.05;
         let distanceTraveled = 0;
         let coinsCollected = 0;
         let reviveCost = 20;
@@ -342,8 +342,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.14;       // FAST SNAPPY DOWNWARD GRAVITY
-        const jumpPower = 0.82;      // HIGH JUMP IMPULSE
+        const gravity = -0.14;
+        const jumpPower = 0.82;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -633,7 +633,7 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // ULTRA-SENSITIVE HIGH SPEED TOUCH GESTURES
+            // FIXED CORRECTED TOUCH SWIPE CONTROLS (LEFT -> DECREASES LANE, RIGHT -> INCREASES LANE)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
@@ -844,7 +844,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                const longDepth = 5.0;
+                const longDepth = 4.0;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
@@ -876,15 +876,16 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'car', depth: 4.5 };
             } else {
-                const tableDepth = 1.0; // SHORT DEPTH FOR FAST SMOOTH SLIDING
-                const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
-                const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-                const tableTop = new THREE.Mesh(topGeo, topMat);
-                tableTop.position.y = 1.1;
-                obsGroup.add(tableTop);
+                // THIN SLIDE BARRIER (REPLACED WIDE TABLE WITH A THIN SLEEK BAR)
+                const thinBarDepth = 0.4;
+                const barGeo = new THREE.BoxGeometry(2.8, 0.3, thinBarDepth);
+                const barMat = new THREE.MeshLambertMaterial({ color: 0x00ffcc, emissive: 0x004433 });
+                const thinBar = new THREE.Mesh(barGeo, barMat);
+                thinBar.position.y = 1.1;
+                obsGroup.add(thinBar);
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
-                obsGroup.userData = { type: 'table', depth: tableDepth };
+                obsGroup.userData = { type: 'table', depth: thinBarDepth };
             }
 
             scene.add(obsGroup);
@@ -923,7 +924,7 @@
                 characterMeshGroup.rotation.z = 0;
                 characterMeshGroup.position.y = 0;
                 playerGroup.position.y = 0;
-            }, 280); // ULTRA-FAST RECOVER SLIDE
+            }, 260); // ULTRA-FAST RECOVER SLIDE
         }
 
         function startGame() {
@@ -991,16 +992,17 @@
                     characterMeshGroup.rotation.z = 0;
                 }
 
+                // SMOOTH, NON-SHAKY CAMERA TRACKING
                 camera.position.z = playerGroup.position.z - 9.5;
                 camera.position.y = 4.2;
                 
-                const targetCamX = playerGroup.position.x * 0.65;
-                camera.position.x += (targetCamX - camera.position.x) * 0.35;
+                const targetCamX = playerGroup.position.x * 0.35;
+                camera.position.x += (targetCamX - camera.position.x) * 0.1;
                 
-                const targetRollTilt = -(playerGroup.position.x - targetX) * 0.08;
-                camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.25;
+                // Zero out roll tilt completely to eliminate shaking
+                camera.rotation.z = 0;
 
-                camera.lookAt(playerGroup.position.x * 0.75, 0.6, playerGroup.position.z + 7);
+                camera.lookAt(playerGroup.position.x * 0.5, 0.6, playerGroup.position.z + 7);
 
                 const firstTile = trackTiles[0];
                 if (firstTile && playerGroup.position.z - firstTile.z > 60) {
