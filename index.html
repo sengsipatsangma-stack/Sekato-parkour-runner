@@ -335,8 +335,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.048;   // High gravity for fast ground return
-        const jumpPower = 0.62;   // Crisp high jump
+        const gravity = -0.048;
+        const jumpPower = 0.62;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -496,7 +496,7 @@
             playerGroup.add(characterMeshGroup);
             buildHumanoidCharacter();
 
-            for (let i = 0; i < 14; i++) {
+            for (let i = 0; i < 16; i++) {
                 spawnTrackTile(i * 20);
             }
 
@@ -868,15 +868,16 @@
                     }
                 }
 
+                // FIXED GROUND ROLLING ANIMATION (Stays fully on ground level cleanly)
                 if (isSliding) {
                     rollAngle += 0.35;
                     if (selectedCharacter === 'Sekato') {
                         characterMeshGroup.rotation.x = rollAngle;
-                        characterMeshGroup.position.y = 0.15 + Math.sin(rollAngle) * 0.1;
+                        characterMeshGroup.position.y = 0.05;
                     } else {
                         characterMeshGroup.rotation.z = rollAngle;
-                        characterMeshGroup.rotation.x = 0.4;
-                        characterMeshGroup.position.y = 0.12 + Math.sin(rollAngle) * 0.08;
+                        characterMeshGroup.rotation.x = 0.2;
+                        characterMeshGroup.position.y = 0.05;
                     }
                 } else {
                     characterMeshGroup.rotation.x = 0;
@@ -903,11 +904,9 @@
                     }
                 }
 
-                // DYNAMIC CAMERA BANKING / SCREEN TILT & POSITIONING
                 camera.position.z = playerGroup.position.z - 7.5;
                 camera.position.y = 4.2;
                 
-                // Screen shifts with player X and banks (tilts) towards movement direction
                 const targetCamX = playerGroup.position.x * 0.35;
                 camera.position.x += (targetCamX - camera.position.x) * 0.2;
                 
@@ -916,8 +915,13 @@
 
                 camera.lookAt(playerGroup.position.x * 0.2, 1.6, playerGroup.position.z + 7);
 
-                const lastTileZ = trackTiles[trackTiles.length - 1].z;
-                if (playerGroup.position.z > lastTileZ - 180) {
+                // FIXED TRACK TILE RECYCLING (Prevents obstacles from disappearing prematurely)
+                const firstTile = trackTiles[0];
+                if (playerGroup.position.z - firstTile.z > 30) {
+                    const removedTile = trackTiles.shift();
+                    scene.remove(removedTile.group);
+                    
+                    const lastTileZ = trackTiles[trackTiles.length - 1].z;
                     spawnTrackTile(lastTileZ + 20);
                 }
 
