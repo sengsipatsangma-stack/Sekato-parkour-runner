@@ -679,21 +679,30 @@
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            const colors = [0xff7b7b, 0xffd166, 0x06d6a0, 0x118ab2, 0x8338ec, 0xff595e, 0x3a86ff];
+            // DETAILED CARTOON TOWN BUILDINGS & ARCHITECTURE INSPIRED BY REFERENCE
+            const bColors = [0xff8585, 0xffd166, 0x48cae4, 0x90e0ef, 0xb5179e, 0x4361ee, 0xf77f00];
             for (let side = -1; side <= 1; side += 2) {
-                const bHeight = 18 + Math.random() * 22;
-                const bGeo = new THREE.BoxGeometry(12, bHeight, 20);
-                const colorChoice = colors[Math.floor(Math.random() * colors.length)];
-                const bMat = new THREE.MeshLambertMaterial({ color: colorChoice });
+                const bHeight = 16 + Math.random() * 20;
+                const bGeo = new THREE.BoxGeometry(11.5, bHeight, 20);
+                const col = bColors[Math.floor(Math.random() * bColors.length)];
+                const bMat = new THREE.MeshLambertMaterial({ color: col });
                 const building = new THREE.Mesh(bGeo, bMat);
                 building.position.set(side * 11.5, (bHeight / 2) - 2, zPos + 10);
                 tileGroup.add(building);
 
-                const decGeo = new THREE.BoxGeometry(12.2, 1.2, 3);
-                const decMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-                const decor = new THREE.Mesh(decGeo, decMat);
-                decor.position.set(side * 11.4, 1.0, zPos + 10);
-                tileGroup.add(decor);
+                // Multi-tier roof structure or cornice awning detail
+                const roofGeo = new THREE.BoxGeometry(11.9, 1.2, 20.2);
+                const roofMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+                const roof = new THREE.Mesh(roofGeo, roofMat);
+                roof.position.set(side * 11.5, bHeight - 2.2, zPos + 10);
+                tileGroup.add(roof);
+
+                // Storefront awning / window trim
+                const awningGeo = new THREE.BoxGeometry(1.2, 0.8, 6);
+                const awningMat = new THREE.MeshLambertMaterial({ color: 0xff4500 });
+                const awning = new THREE.Mesh(awningGeo, awningMat);
+                awning.position.set(side * 5.6, 1.5, zPos + 10);
+                tileGroup.add(awning);
             }
 
             scene.add(tileGroup);
@@ -868,17 +877,11 @@
                     }
                 }
 
-                // FIXED GROUND ROLLING ANIMATION (Stays fully on ground level cleanly)
                 if (isSliding) {
                     rollAngle += 0.35;
-                    if (selectedCharacter === 'Sekato') {
-                        characterMeshGroup.rotation.x = rollAngle;
-                        characterMeshGroup.position.y = 0.05;
-                    } else {
-                        characterMeshGroup.rotation.z = rollAngle;
-                        characterMeshGroup.rotation.x = 0.2;
-                        characterMeshGroup.position.y = 0.05;
-                    }
+                    characterMeshGroup.rotation.x = rollAngle;
+                    characterMeshGroup.rotation.z = 0;
+                    characterMeshGroup.position.y = 0.05;
                 } else {
                     characterMeshGroup.rotation.x = 0;
                     characterMeshGroup.rotation.z = 0;
@@ -889,19 +892,11 @@
 
                 runAnimTime += forwardSpeed * 1.25;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
-                    if (selectedCharacter === 'Sekato') {
-                        leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
-                        rightArm.rotation.x = -Math.sin(runAnimTime) * 0.75;
-                        leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.85;
-                        rightLeg.rotation.x = Math.sin(runAnimTime) * 0.85;
-                        characterMeshGroup.rotation.z = 0;
-                    } else {
-                        leftArm.rotation.x = Math.sin(runAnimTime) * 0.65;
-                        rightArm.rotation.x = -Math.sin(runAnimTime) * 0.65;
-                        leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.75;
-                        rightLeg.rotation.x = Math.sin(runAnimTime) * 0.75;
-                        characterMeshGroup.rotation.z = Math.sin(runAnimTime * 0.6) * 0.06;
-                    }
+                    leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
+                    rightArm.rotation.x = -Math.sin(runAnimTime) * 0.75;
+                    leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.85;
+                    rightLeg.rotation.x = Math.sin(runAnimTime) * 0.85;
+                    characterMeshGroup.rotation.z = 0;
                 }
 
                 camera.position.z = playerGroup.position.z - 7.5;
@@ -915,7 +910,6 @@
 
                 camera.lookAt(playerGroup.position.x * 0.2, 1.6, playerGroup.position.z + 7);
 
-                // FIXED TRACK TILE RECYCLING (Prevents obstacles from disappearing prematurely)
                 const firstTile = trackTiles[0];
                 if (playerGroup.position.z - firstTile.z > 30) {
                     const removedTile = trackTiles.shift();
