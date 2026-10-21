@@ -332,7 +332,7 @@
         let gameState = 'MENU';
 
         let currentLane = 1;
-        const laneX = [-3.2, 0, 3.2]; // Index 0: Left (-3.2), Index 1: Center (0), Index 2: Right (+3.2)
+        const laneX = [-3.2, 0, 3.2]; // Standard Lane Positions: Left (-3.2), Center (0), Right (+3.2)
         let forwardSpeed = 0.48;
         const maxSpeed = 1.05;
         let distanceTraveled = 0;
@@ -633,7 +633,7 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // DIRECT NON-INVERTED TOUCH CONTROLS (SWIPE LEFT -> DECREASES LANE, SWIPE RIGHT -> INCREASES LANE)
+            // DOUBLE INVERSE CONTROL RESOLUTION (SWIPE LEFT -> DECREASES LANE INDEX -> MOVES LEFT; SWIPE RIGHT -> INCREASES LANE INDEX -> MOVES RIGHT)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
@@ -844,7 +844,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                // THINNED OUT SLIDE OBSTACLE (SHRUNK TO 0.4 DEPTH)
+                // THINNED OUT SLIDE OBSTACLE (0.4 DEPTH)
                 const thinSlideDepth = 0.4;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, thinSlideDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
