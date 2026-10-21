@@ -159,7 +159,7 @@
     <!-- MAIN MENU -->
     <div id="menu-screen" class="modal">
         <div class="modal-title">SEKATO RUNNER</div>
-        <div class="subtitle">3D Cartoon Town Parkour</div>
+        <div class="subtitle">3D City Parkour Adventure</div>
         
         <div class="character-select">
             <div class="char-card selected" id="card-sekato" onclick="selectChar('Sekato')">
@@ -187,7 +187,8 @@
 
     <script>
         let scene, camera, renderer;
-        let playerGroup, playerMesh;
+        let playerGroup;
+        let leftArm, rightArm, leftLeg, rightLeg; // Humanoid limbs
         let selectedCharacter = 'Sekato';
         let isPlaying = false;
         let isDead = false;
@@ -209,7 +210,7 @@
         let trackTiles = [];
         let obstacles = [];
         let coins = [];
-        let droneMesh;
+        let runAnimTime = 0;
 
         let touchStartX = 0;
         let touchStartY = 0;
@@ -218,7 +219,7 @@
             const container = document.getElementById('canvas-container');
             
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x70c5ce); // Bright cartoon sky blue
+            scene.background = new THREE.Color(0x70c5ce);
             scene.fog = new THREE.FogExp2(0x70c5ce, 0.008);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -239,20 +240,13 @@
 
             playerGroup = new THREE.Group();
             scene.add(playerGroup);
-            buildPlayerMesh();
-
-            // Flying Drone Enemy
-            const droneGeo = new THREE.ConeGeometry(0.8, 1.2, 4);
-            const droneMat = new THREE.MeshLambertMaterial({ color: 0xff0055 });
-            droneMesh = new THREE.Mesh(droneGeo, droneMat);
-            droneMesh.rotation.x = Math.PI;
-            scene.add(droneMesh);
+            buildHumanoidCharacter();
 
             for (let i = 0; i < 14; i++) {
                 spawnTrackTile(i * 20);
             }
 
-            // Controls Setup
+            // Touch Controls
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('touchstart', e => {
                 touchStartX = e.touches[0].clientX;
@@ -281,92 +275,77 @@
             animate();
         }
 
-        function createCharacterTexture(name) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-
-            if (name === 'Sekato') {
-                ctx.clearRect(0, 0, 256, 512);
-                ctx.fillStyle = '#0066ff'; 
-                ctx.fillRect(40, 220, 88, 200);
-                ctx.fillStyle = '#ff2200'; 
-                ctx.fillRect(128, 220, 88, 200);
-                ctx.fillStyle = '#111111';
-                ctx.fillRect(70, 420, 116, 80);
-                ctx.fillStyle = '#ffccaa';
-                ctx.beginPath();
-                ctx.arc(128, 140, 45, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#111';
-                ctx.fillRect(118, 105, 20, 35); 
-                ctx.fillRect(95, 135, 15, 25);  
-                ctx.fillRect(146, 135, 15, 25); 
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.moveTo(70, 130);
-                ctx.lineTo(128, 70);
-                ctx.lineTo(186, 130);
-                ctx.lineTo(170, 90);
-                ctx.lineTo(128, 50);
-                ctx.lineTo(86, 90);
-                ctx.closePath();
-                ctx.fill();
-            } else {
-                ctx.clearRect(0, 0, 256, 512);
-                ctx.fillStyle = '#1a1a1a';
-                ctx.fillRect(50, 240, 156, 150);
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(128, 295, 20, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#111';
-                ctx.fillRect(75, 390, 106, 70);
-                ctx.fillStyle = '#ffccaa';
-                ctx.fillRect(85, 460, 35, 50);
-                ctx.fillRect(136, 460, 35, 50);
-                ctx.fillStyle = '#ffccaa';
-                ctx.beginPath();
-                ctx.arc(128, 140, 42, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#111';
-                ctx.beginPath();
-                ctx.arc(128, 125, 45, Math.PI, Math.PI * 2);
-                ctx.fill();
-                ctx.fillRect(160, 100, 30, 60);
+        // --- BUILD REAL 3D HUMANOID CHARACTER ---
+        function buildHumanoidCharacter() {
+            // Clear existing mesh
+            while (playerGroup.children.length > 0) {
+                playerGroup.remove(playerGroup.children[0]);
             }
-            return new THREE.CanvasTexture(canvas);
-        }
 
-        function buildPlayerMesh() {
-            if (playerMesh) playerGroup.remove(playerMesh);
-            const texture = createCharacterTexture(selectedCharacter);
-            const mat = new THREE.SpriteMaterial({ map: texture });
-            playerMesh = new THREE.Sprite(mat);
-            playerMesh.scale.set(2.2, 3.8, 1);
-            playerMesh.position.y = 1.9;
-            playerGroup.add(playerMesh);
+            const isSekato = selectedCharacter === 'Sekato';
+            const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa });
+            const hoodieMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0055ff : 0x111111 }); // Blue hoodie or Black cropped hoodie
+            const pantsMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x111111 : 0x222222 });
+            const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 }); // White hair vs Black hair
+
+            // 1. Torso
+            const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
+            const torso = new THREE.Mesh(torsoGeo, hoodieMat);
+            torso.position.y = 1.25;
+            playerGroup.add(torso);
+
+            // 2. Head
+            const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const head = new THREE.Mesh(headGeo, skinMat);
+            head.position.y = 1.95;
+            playerGroup.add(head);
+
+            // 3. Spiky Hair
+            const hairGeo = new THREE.ConeGeometry(0.35, 0.4, 5);
+            const hair = new THREE.Mesh(hairGeo, hairMat);
+            hair.position.set(0, 2.3, 0);
+            playerGroup.add(hair);
+
+            // 4. Arms
+            const armGeo = new THREE.BoxGeometry(0.2, 0.7, 0.2);
+            
+            leftArm = new THREE.Mesh(armGeo, hoodieMat);
+            leftArm.position.set(-0.48, 1.25, 0);
+            playerGroup.add(leftArm);
+
+            rightArm = new THREE.Mesh(armGeo, hoodieMat);
+            rightArm.position.set(0.48, 1.25, 0);
+            playerGroup.add(rightArm);
+
+            // 5. Legs
+            const legGeo = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+
+            leftLeg = new THREE.Mesh(legGeo, pantsMat);
+            leftLeg.position.set(-0.2, 0.4, 0);
+            playerGroup.add(leftLeg);
+
+            rightLeg = new THREE.Mesh(legGeo, pantsMat);
+            rightLeg.position.set(0.2, 0.4, 0);
+            playerGroup.add(rightLeg);
         }
 
         function selectChar(name) {
             selectedCharacter = name;
             document.getElementById('card-sekato').classList.toggle('selected', name === 'Sekato');
             document.getElementById('card-aika').classList.toggle('selected', name === 'Aika');
-            buildPlayerMesh();
+            buildHumanoidCharacter();
         }
 
         function spawnTrackTile(zPos) {
             const tileGroup = new THREE.Group();
             
-            // Paved Town Street / Rooftop Path
             const geo = new THREE.BoxGeometry(11, 2, 20);
             const mat = new THREE.MeshLambertMaterial({ color: 0xdcd6d0 });
             const tile = new THREE.Mesh(geo, mat);
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            // Colorful Cartoon Town Buildings[span_6](start_span)[span_6](end_span) on both sides
+            // Town Buildings[span_1](start_span)[span_1](end_span)
             const colors = [0xff7b7b, 0xffd166, 0x06d6a0, 0x118ab2, 0x8338ec];
             for (let side = -1; side <= 1; side += 2) {
                 const bHeight = 16 + Math.random() * 18;
@@ -394,14 +373,13 @@
             const obsGroup = new THREE.Group();
 
             if (isTall) {
-                // Construction Barrier Barricade Fence (Yellow & Black stripes)[span_7](start_span)[span_7](end_span)[span_8](start_span)[span_8](end_span)
+                // Construction Barricade[span_2](start_span)[span_2](end_span)[span_3](start_span)[span_3](end_span)
                 const barGeo = new THREE.BoxGeometry(2.4, 0.8, 0.4);
                 const barMat = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
                 const bar = new THREE.Mesh(barGeo, barMat);
                 bar.position.y = 1.0;
                 obsGroup.add(bar);
 
-                // Side poles
                 const poleGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.8);
                 const poleMat = new THREE.MeshLambertMaterial({ color: 0x555555 });
                 const p1 = new THREE.Mesh(poleGeo, poleMat);
@@ -414,14 +392,13 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'tall' };
             } else {
-                // Low roadblock barrier
                 const lowGeo = new THREE.BoxGeometry(2.6, 0.5, 0.4);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
                 lowBar.position.y = 0.25;
                 obsGroup.add(lowBar);
 
-                obsGroup.position.set(laneX[lane], 1.8, zPos); // Placed overhead for sliding under
+                obsGroup.position.set(laneX[lane], 1.8, zPos);
                 obsGroup.userData = { type: 'low' };
             }
 
@@ -444,9 +421,9 @@
 
         function triggerSlide() {
             isSliding = true;
-            if (playerMesh) playerMesh.scale.set(2.2, 1.8, 1);
+            playerGroup.scale.set(1, 0.5, 1);
             setTimeout(() => {
-                if (playerMesh) playerMesh.scale.set(2.2, 3.8, 1);
+                playerGroup.scale.set(1, 1, 1);
                 isSliding = false;
             }, 750);
         }
@@ -487,11 +464,18 @@
 
                 playerGroup.position.z += forwardSpeed;
 
+                // --- RUNNING ANIMATION (SWING ARMS & LEGS) ---
+                runAnimTime += forwardSpeed * 0.8;
+                if (leftArm && rightArm && leftLeg && rightLeg && !isJumping) {
+                    leftArm.rotation.x = Math.sin(runAnimTime) * 0.6;
+                    rightArm.rotation.x = -Math.sin(runAnimTime) * 0.6;
+                    leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.7;
+                    rightLeg.rotation.x = Math.sin(runAnimTime) * 0.7;
+                }
+
                 camera.position.z = playerGroup.position.z - 8;
                 camera.position.x = playerGroup.position.x * 0.3;
                 camera.lookAt(playerGroup.position.x * 0.2, 1.5, playerGroup.position.z + 8);
-
-                droneMesh.position.set(playerGroup.position.x, 2.8, playerGroup.position.z - 5);
 
                 const lastTileZ = trackTiles[trackTiles.length - 1].z;
                 if (playerGroup.position.z > lastTileZ - 180) {
