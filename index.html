@@ -479,20 +479,24 @@
             audioMuted = !audioMuted;
             const btn = document.querySelector('.sound-btn');
             if (btn) btn.innerText = audioMuted ? '🔇' : '🔊';
-            if (audioMuted && bgMusicTimer) {
-                clearInterval(bgMusicTimer);
-                bgMusicTimer = null;
-            } else if (!audioMuted && gameState === 'PLAYING') {
+            if (audioMuted) {
+                stopBackgroundMusic();
+            } else if (gameState === 'PLAYING') {
                 startBackgroundMusic();
             }
         }
 
         function startBackgroundMusic() {
-            if (bgMusicTimer || audioMuted) return;
+            stopBackgroundMusic();
+            if (audioMuted || gameState !== 'PLAYING') return;
+
             const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
             let noteIdx = 0;
             bgMusicTimer = setInterval(() => {
-                if (gameState !== 'PLAYING' || audioMuted || !audioCtx) return;
+                if (gameState !== 'PLAYING' || audioMuted || !audioCtx) {
+                    stopBackgroundMusic();
+                    return;
+                }
                 try {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
@@ -517,7 +521,7 @@
         }
 
         function playSound(type) {
-            if (!audioCtx || audioMuted) return;
+            if (!audioCtx || audioMuted || gameState !== 'PLAYING') return;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -557,6 +561,21 @@
             } catch (e) {}
         }
 
+        // MUTE SOUND WHEN LEAVING TAB OR MINIMIZING APP
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopBackgroundMusic();
+                if (audioCtx) audioCtx.suspend();
+            } else {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (gameState === 'PLAYING') {
+                    startBackgroundMusic();
+                }
+            }
+        });
+
         function resetTrackAndWorld() {
             while (trackTiles.length > 0) {
                 const t = trackTiles.pop();
@@ -583,7 +602,6 @@
             scene.background = new THREE.Color(0x70c5ce);
             scene.fog = new THREE.FogExp2(0x70c5ce, 0.001);
 
-            // OPTIMIZED FIELD OF VIEW (60 DEG) FOR PERFECT FULL BODY VISIBILITY
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
@@ -622,8 +640,11 @@
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx < -20 && currentLane > 0) currentLane--;       // SWIPE LEFT -> MOVE LEFT
-                    else if (dx > 20 && currentLane < 2) currentLane++;   // SWIPE RIGHT -> MOVE RIGHT
+                    if (dx < -20 && currentLane > 0) {
+                        currentLane--;
+                    } else if (dx > 20 && currentLane < 2) {
+                        currentLane++;
+                    }
                 } else {
                     if (dy < -20 && !isJumping && !isSliding) {
                         isJumping = true; 
@@ -762,7 +783,7 @@
 
         function setupCameraForGame() {
             playerGroup.rotation.y = 0;
-            camera.position.set(0, 4.2, -9.5); // PULLED BACK SO FULL BODY SHOWS CLEARLY
+            camera.position.set(0, 4.2, -9.5);
             camera.lookAt(0, 0.6, 7);
         }
 
@@ -907,7 +928,6 @@
 
         function startGame() {
             initAudio();
-            startBackgroundMusic();
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'flex';
             gameState = 'PLAYING';
@@ -920,6 +940,7 @@
             resetTrackAndWorld();
             playerGroup.position.set(0, 0, 0);
             setupCameraForGame();
+            startBackgroundMusic();
         }
 
         function animate() {
@@ -970,7 +991,6 @@
                     characterMeshGroup.rotation.z = 0;
                 }
 
-                // PERFECT FULL BODY CAMERA TRACKING ANCHORS
                 camera.position.z = playerGroup.position.z - 9.5;
                 camera.position.y = 4.2;
                 
@@ -1069,23 +1089,23 @@
                 coinsCollected -= reviveCost;
                 reviveCost *= 2;
                 gameState = 'PLAYING';
-                startBackgroundMusic();
                 playerGroup.position.z += 6;
                 playerGroup.position.y = 0;
                 isJumping = false;
                 isSliding = false;
                 document.getElementById('gameover-screen').style.display = 'none';
+                startBackgroundMusic();
             } else {
                 alert("Not enough coins!");
             }
         }
 
         function restartToMenu() {
+            gameState = 'MENU';
             stopBackgroundMusic();
             document.getElementById('gameover-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
-            gameState = 'MENU';
             
             resetTrackAndWorld();
             buildCuteCharacter();
