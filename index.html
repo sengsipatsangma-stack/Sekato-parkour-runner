@@ -66,6 +66,7 @@
             color: #ff4500;
         }
         
+        /* LOBBY UI LAYOUT */
         #menu-screen {
             position: absolute;
             top: 0;
@@ -166,7 +167,7 @@
         }
         .btn-secondary {
             background: #2a3b50;
-            font-size: 14px;
+            font-size: 13px;
             padding: 8px 0;
             box-shadow: none;
             border: 1px solid #4a6b88;
@@ -250,10 +251,10 @@
         </div>
     </div>
 
-    <!-- PROFILE MODAL (Shown First Time) -->
+    <!-- PROFILE CREATION MODAL -->
     <div id="profile-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 28px;">CREATE PROFILE</div>
-        <div class="subtitle" style="margin-bottom: 20px;">Set your details to enter the leaderboard</div>
+        <div class="subtitle" style="margin-bottom: 20px;">Set your details to enter the high score leaderboard</div>
         
         <div class="input-group">
             <label>Player Name</label>
@@ -270,13 +271,11 @@
         <button class="btn" onclick="saveProfile()" style="margin-top: 10px;">SAVE PROFILE</button>
     </div>
 
-    <!-- LEADERBOARD MODAL -->
+    <!-- HIGH SCORE LIST MODAL -->
     <div id="leaderboard-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 28px; color: #ffd700;">🏆 HIGH SCORES</div>
         
-        <div class="leaderboard-box" id="leaderboard-list">
-            <!-- Dynamically populated -->
-        </div>
+        <div class="leaderboard-box" id="leaderboard-list"></div>
 
         <button class="btn" onclick="closeLeaderboard()" style="margin-top: 10px;">BACK TO LOBBY</button>
     </div>
@@ -337,8 +336,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.022;
-        const jumpPower = 0.38;
+        const gravity = -0.024;
+        const jumpPower = 0.46;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -349,7 +348,6 @@
         let touchStartX = 0;
         let touchStartY = 0;
 
-        // Player Data
         let playerData = {
             name: "Sekato",
             gender: "Male",
@@ -424,7 +422,6 @@
             document.getElementById('leaderboard-modal').style.display = 'none';
         }
 
-        // --- WEB AUDIO SYNTHESIZER ---
         let audioCtx;
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -521,7 +518,6 @@
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // DIRECT SWIPE CONTROLS: Left -> move left, Right -> move right
                     if (dx < -20 && currentLane > 0) currentLane--;      
                     else if (dx > 20 && currentLane < 2) currentLane++;  
                 } else {
@@ -553,7 +549,6 @@
             animate();
         }
 
-        // --- DETAILED GENDER-SPECIFIC CHARACTER MODELS ---
         function buildHumanoidCharacter() {
             while (characterMeshGroup.children.length > 0) {
                 characterMeshGroup.remove(characterMeshGroup.children[0]);
@@ -572,7 +567,6 @@
             const torsoGroup = new THREE.Group();
 
             if (isSekato) {
-                // SEKATO (BOY) - Athletic Split Hoodie
                 const leftBodyGeo = new THREE.BoxGeometry(0.38, 0.95, 0.45);
                 const leftBody = new THREE.Mesh(leftBodyGeo, blueMat);
                 leftBody.position.set(-0.19, 1.25, 0);
@@ -583,19 +577,16 @@
                 rightBody.position.set(0.19, 1.25, 0);
                 torsoGroup.add(rightBody);
             } else {
-                // AIKA (GIRL) - Stylish Pink/Purple Cropped Hoodie & Denim Shorts
                 const cropGeo = new THREE.BoxGeometry(0.64, 0.55, 0.38);
                 const crop = new THREE.Mesh(cropGeo, pinkMat);
                 crop.position.set(0, 1.45, 0);
                 torsoGroup.add(crop);
 
-                // Midriff
                 const midGeo = new THREE.BoxGeometry(0.56, 0.25, 0.34);
                 const mid = new THREE.Mesh(midGeo, skinMat);
                 mid.position.set(0, 1.05, 0);
                 torsoGroup.add(mid);
 
-                // Shorts
                 const shortsGeo = new THREE.BoxGeometry(0.60, 0.25, 0.36);
                 const shorts = new THREE.Mesh(shortsGeo, purpleMat);
                 shorts.position.set(0, 0.8, 0);
@@ -603,7 +594,6 @@
             }
             characterMeshGroup.add(torsoGroup);
 
-            // Head
             const headGeo = new THREE.BoxGeometry(0.48, 0.48, 0.48);
             const head = new THREE.Mesh(headGeo, skinMat);
             head.position.y = 1.95;
@@ -627,7 +617,6 @@
 
             characterMeshGroup.add(head);
 
-            // Hair Styles
             if (isSekato) {
                 for (let i = 0; i < 5; i++) {
                     const spikeGeo = new THREE.ConeGeometry(0.18, 0.4, 4);
@@ -636,27 +625,23 @@
                     characterMeshGroup.add(spike);
                 }
             } else {
-                // AIKA - Sleek Ponytail & Top Knot with Bow
                 const hairTopGeo = new THREE.BoxGeometry(0.52, 0.25, 0.52);
                 const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
                 hairTop.position.set(0, 2.15, 0);
                 characterMeshGroup.add(hairTop);
 
-                // Long Ponytail
                 const tailGeo = new THREE.ConeGeometry(0.18, 0.8, 6);
                 const tail = new THREE.Mesh(tailGeo, hairMat);
                 tail.rotation.x = -Math.PI / 3;
                 tail.position.set(0, 2.0, -0.42);
                 characterMeshGroup.add(tail);
 
-                // Pink Hair Bow
                 const bowGeo = new THREE.BoxGeometry(0.25, 0.12, 0.1);
                 const bow = new THREE.Mesh(bowGeo, pinkMat);
                 bow.position.set(0, 2.22, -0.28);
                 characterMeshGroup.add(bow);
             }
 
-            // Arms
             const armGeo = new THREE.BoxGeometry(0.20, 0.75, 0.20);
             leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : pinkMat);
             leftArm.position.set(isSekato ? -0.50 : -0.44, 1.25, 0);
@@ -666,7 +651,6 @@
             rightArm.position.set(isSekato ? 0.50 : 0.44, 1.25, 0);
             characterMeshGroup.add(rightArm);
 
-            // Legs & Shoes
             const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.20, 0.7, isSekato ? 0.24 : 0.20);
             leftLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : skinMat);
             leftLeg.position.set(isSekato ? -0.2 : -0.16, 0.42, 0);
@@ -745,31 +729,29 @@
             
             const obsGroup = new THREE.Group();
 
-            if (randType < 0.3) {
-                // 1. JUMP-ONLY YELLOW/BLACK HURDLE
-                const hurdleGeo = new THREE.BoxGeometry(2.4, 0.75, 0.4);
+            if (randType < 0.35) {
+                const hurdleGeo = new THREE.BoxGeometry(2.4, 0.5, 0.4);
                 const hurdleMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const hurdle = new THREE.Mesh(hurdleGeo, hurdleMat);
-                hurdle.position.y = 0.375;
+                hurdle.position.y = 0.25;
                 obsGroup.add(hurdle);
 
-                const stripeGeo = new THREE.BoxGeometry(0.4, 0.77, 0.42);
+                const stripeGeo = new THREE.BoxGeometry(0.4, 0.52, 0.42);
                 const stripeMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
                 for (let s = -0.8; s <= 0.8; s += 0.8) {
                     const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-                    stripe.position.set(s, 0.375, 0);
+                    stripe.position.set(s, 0.25, 0);
                     obsGroup.add(stripe);
                 }
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
-            } else if (randType < 0.55) {
-                // 2. EXTENDED ROLL-UNDER OVERHEAD BARRIER (Sufficiently High Off Floor)
+            } else if (randType < 0.6) {
                 const longDepth = 7.0;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
-                lowBar.position.y = 2.2; // High overhead, clear clearance for low roll
+                lowBar.position.y = 2.2;
                 obsGroup.add(lowBar);
 
                 const poleGeo = new THREE.CylinderGeometry(0.1, 0.1, 2.2);
@@ -786,16 +768,13 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'roll_only', depth: longDepth };
             } else if (randType < 0.8) {
-                // 3. WALL WITH LOW HOLE (Must Roll Through Gap!)
                 const wallMat = new THREE.MeshLambertMaterial({ color: 0xaa33cc });
                 
-                // Top Wall Section
                 const topGeo = new THREE.BoxGeometry(2.8, 2.5, 0.6);
                 const topWall = new THREE.Mesh(topGeo, wallMat);
                 topWall.position.y = 2.45;
                 obsGroup.add(topWall);
 
-                // Left Pillar
                 const sideGeo = new THREE.BoxGeometry(0.5, 1.2, 0.6);
                 const leftWall = new THREE.Mesh(sideGeo, wallMat);
                 leftWall.position.set(-1.15, 0.6, 0);
@@ -804,7 +783,6 @@
                 obsGroup.add(leftWall);
                 obsGroup.add(rightWall);
 
-                // Yellow warning trim
                 const trimGeo = new THREE.BoxGeometry(1.8, 0.2, 0.62);
                 const trimMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const trim = new THREE.Mesh(trimGeo, trimMat);
@@ -814,20 +792,19 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'hole_wall', depth: 0.6 };
             } else {
-                // 4. TABLE OBSTACLE (Jump Over OR Roll Under)
                 const tableDepth = 3.2;
                 const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
                 const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
                 const tableTop = new THREE.Mesh(topGeo, topMat);
-                tableTop.position.y = 1.3;
+                tableTop.position.y = 1.25;
                 obsGroup.add(tableTop);
 
-                const legGeo = new THREE.BoxGeometry(0.2, 1.3, 0.2);
+                const legGeo = new THREE.BoxGeometry(0.2, 1.25, 0.2);
                 const legMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
                 for (let lx of [-1.2, 1.2]) {
                     for (let lz of [-1.3, 1.3]) {
                         const leg = new THREE.Mesh(legGeo, legMat);
-                        leg.position.set(lx, 0.65, lz);
+                        leg.position.set(lx, 0.625, lz);
                         obsGroup.add(leg);
                     }
                 }
@@ -909,15 +886,12 @@
                     }
                 }
 
-                // GENDER-SPECIFIC ROLLING STYLES
                 if (isSliding) {
                     rollAngle += 0.3;
                     if (selectedCharacter === 'Sekato') {
-                        // Sekato: Tight forward tumble
                         characterMeshGroup.rotation.x = rollAngle;
                         characterMeshGroup.position.y = 0.25;
                     } else {
-                        // Aika: Elegant sideways parkour dive-roll
                         characterMeshGroup.rotation.z = rollAngle;
                         characterMeshGroup.rotation.x = 0.3;
                         characterMeshGroup.position.y = 0.22;
@@ -930,23 +904,20 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                // GENDER-SPECIFIC RUNNING STYLES
                 runAnimTime += forwardSpeed * 1.15;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
                     if (selectedCharacter === 'Sekato') {
-                        // Athletic sprint with strong arm swing & wide knees
                         leftArm.rotation.x = Math.sin(runAnimTime) * 0.85;
                         rightArm.rotation.x = -Math.sin(runAnimTime) * 0.85;
                         leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.95;
                         rightLeg.rotation.x = Math.sin(runAnimTime) * 0.95;
                         characterMeshGroup.rotation.z = 0;
                     } else {
-                        // Aika: High-knee parkour run with elegant hip sway
                         leftArm.rotation.x = Math.sin(runAnimTime) * 0.65;
                         rightArm.rotation.x = -Math.sin(runAnimTime) * 0.65;
                         leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.75;
                         rightLeg.rotation.x = Math.sin(runAnimTime) * 0.75;
-                        characterMeshGroup.rotation.z = Math.sin(runAnimTime * 0.5) * 0.08; // Hip sway
+                        characterMeshGroup.rotation.z = Math.sin(runAnimTime * 0.5) * 0.08;
                     }
                 }
 
@@ -960,7 +931,6 @@
                     spawnTrackTile(lastTileZ + 20);
                 }
 
-                // Coins Collision
                 for (let i = activeCoins.length - 1; i >= 0; i--) {
                     const coin = activeCoins[i];
                     coin.rotation.z += 0.08;
@@ -975,7 +945,6 @@
                     }
                 }
 
-                // Obstacles Collision
                 for (let i = activeObstacles.length - 1; i >= 0; i--) {
                     const obs = activeObstacles[i];
                     const depth = obs.userData.depth || 0.4;
@@ -984,12 +953,11 @@
                         Math.abs(obs.position.x - playerGroup.position.x) < 1.1) {
                         
                         if (obs.userData.type === 'jump_only') {
-                            if (playerGroup.position.y < 0.6) triggerGameOver();
+                            if (playerGroup.position.y < 0.4) triggerGameOver();
                         } else if (obs.userData.type === 'roll_only' || obs.userData.type === 'hole_wall') {
-                            // MUST BE SLIDING/ROLLING TO PASS HOLE WALL OR OVERHEAD CANOPY!
                             if (!isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'table') {
-                            const isHighEnough = playerGroup.position.y > 1.1;
+                            const isHighEnough = playerGroup.position.y > 1.0;
                             const isRollingUnder = isSliding;
                             if (!isHighEnough && !isRollingUnder) triggerGameOver();
                         }
@@ -1009,7 +977,6 @@
             gameState = 'GAMEOVER';
             playSound('crash');
 
-            // Save run score to profile leaderboard
             playerData.scores.push({
                 name: playerData.name,
                 gender: playerData.gender,
