@@ -66,7 +66,6 @@
             color: #ff4500;
         }
         
-        /* LOBBY UI OVERLAY */
         #menu-screen {
             position: absolute;
             top: 0;
@@ -167,10 +166,11 @@
         }
         .btn-secondary {
             background: #2a3b50;
-            font-size: 13px;
-            padding: 8px 0;
+            font-size: 14px;
+            padding: 9px 0;
             box-shadow: none;
             border: 1px solid #4a6b88;
+            flex: 1;
         }
 
         .modal {
@@ -299,12 +299,10 @@
                 </div>
             </div>
 
-            <!-- START BUTTON PLACED AT THE BOTTOM BELOW CHARACTER SHOWCASE -->
             <button class="btn" onclick="startGame()">START RUN</button>
             <div style="display: flex; gap: 8px; width: 100%;">
                 <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 SCORES</button>
                 <button class="btn btn-secondary" onclick="editProfile()">👤 PROFILE</button>
-                <button class="btn btn-secondary" style="background: #502a2a; border-color: #884a4a;" onclick="clearStorageData()">🗑️ CLEAR</button>
             </div>
         </div>
     </div>
@@ -338,7 +336,7 @@
         let isSliding = false;
         let verticalVelocity = 0;
         const gravity = -0.026;
-        const jumpPower = 0.52; // Higher vertical clearance for hurdles
+        const jumpPower = 0.52;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -387,15 +385,6 @@
             document.getElementById('profile-modal').style.display = 'flex';
         }
 
-        function clearStorageData() {
-            if (confirm("Clear all profile data and high scores?")) {
-                localStorage.removeItem('SekatoRunner_Profile');
-                playerData = { name: "Sekato", gender: "Male", scores: [] };
-                document.getElementById('profile-modal').style.display = 'flex';
-                updateHUDLabels();
-            }
-        }
-
         function updateHUDLabels() {
             document.getElementById('player-tag').innerText = playerData.name;
             document.getElementById('gender-tag').innerText = playerData.gender === 'Male' ? '👨' : '👩';
@@ -405,11 +394,21 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             
-            const scores = playerData.scores.sort((a,b) => b.km - a.km);
-            if (scores.length === 0) {
+            // UNIQUE LEADERBOARD: Aggregate highest score per player name
+            const bestScoresMap = {};
+            playerData.scores.forEach(entry => {
+                const key = entry.name.toLowerCase();
+                if (!bestScoresMap[key] || entry.km > bestScoresMap[key].km) {
+                    bestScoresMap[key] = entry;
+                }
+            });
+
+            const uniqueScores = Object.values(bestScoresMap).sort((a, b) => b.km - a.km);
+
+            if (uniqueScores.length === 0) {
                 list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
             } else {
-                scores.slice(0, 10).forEach((item, index) => {
+                uniqueScores.slice(0, 10).forEach((item, index) => {
                     const row = document.createElement('div');
                     row.className = 'leader-item';
                     row.innerHTML = `<span>#${index+1} ${item.name} (${item.gender === 'Male' ? '♂' : '♀'})</span><span>${item.km.toFixed(1)} km</span>`;
@@ -519,8 +518,8 @@
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx < -20 && currentLane > 0) currentLane--;      
-                    else if (dx > 20 && currentLane < 2) currentLane++;  
+                    if (dx > 20 && currentLane > 0) currentLane--;      
+                    else if (dx < -20 && currentLane < 2) currentLane++;  
                 } else {
                     if (dy < -20 && !isJumping && !isSliding) { 
                         isJumping = true; 
@@ -560,10 +559,8 @@
             const blueMat = new THREE.MeshLambertMaterial({ color: 0x0055ff });
             const redMat = new THREE.MeshLambertMaterial({ color: 0xff2200 });
             const darkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-            const pinkMat = new THREE.MeshLambertMaterial({ color: 0xff3388 });
-            const purpleMat = new THREE.MeshLambertMaterial({ color: 0x8822cc });
-            const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x1a0a0a });
-            const shoeMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xeeeeee : 0xff66aa });
+            const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 });
+            const shoeMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xeeeeee : 0xff3388 });
 
             const torsoGroup = new THREE.Group();
 
@@ -578,20 +575,15 @@
                 rightBody.position.set(0.19, 1.25, 0);
                 torsoGroup.add(rightBody);
             } else {
-                const cropGeo = new THREE.BoxGeometry(0.64, 0.55, 0.38);
-                const crop = new THREE.Mesh(cropGeo, pinkMat);
+                const cropGeo = new THREE.BoxGeometry(0.66, 0.52, 0.40);
+                const crop = new THREE.Mesh(cropGeo, darkMat);
                 crop.position.set(0, 1.45, 0);
                 torsoGroup.add(crop);
 
-                const midGeo = new THREE.BoxGeometry(0.56, 0.25, 0.34);
+                const midGeo = new THREE.BoxGeometry(0.58, 0.22, 0.36);
                 const mid = new THREE.Mesh(midGeo, skinMat);
                 mid.position.set(0, 1.05, 0);
                 torsoGroup.add(mid);
-
-                const shortsGeo = new THREE.BoxGeometry(0.60, 0.25, 0.36);
-                const shorts = new THREE.Mesh(shortsGeo, purpleMat);
-                shorts.position.set(0, 0.8, 0);
-                torsoGroup.add(shorts);
             }
             characterMeshGroup.add(torsoGroup);
 
@@ -626,44 +618,38 @@
                     characterMeshGroup.add(spike);
                 }
             } else {
-                const hairTopGeo = new THREE.BoxGeometry(0.52, 0.25, 0.52);
+                const hairTopGeo = new THREE.BoxGeometry(0.54, 0.3, 0.54);
                 const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
-                hairTop.position.set(0, 2.15, 0);
+                hairTop.position.set(0, 2.12, 0);
                 characterMeshGroup.add(hairTop);
 
-                const tailGeo = new THREE.ConeGeometry(0.18, 0.8, 6);
-                const tail = new THREE.Mesh(tailGeo, hairMat);
-                tail.rotation.x = -Math.PI / 3;
-                tail.position.set(0, 2.0, -0.42);
-                characterMeshGroup.add(tail);
-
-                const bowGeo = new THREE.BoxGeometry(0.25, 0.12, 0.1);
-                const bow = new THREE.Mesh(bowGeo, pinkMat);
-                bow.position.set(0, 2.22, -0.28);
-                characterMeshGroup.add(bow);
+                const longHairGeo = new THREE.BoxGeometry(0.48, 0.95, 0.22);
+                const longHair = new THREE.Mesh(longHairGeo, hairMat);
+                longHair.position.set(0, 1.55, -0.32);
+                characterMeshGroup.add(longHair);
             }
 
-            const armGeo = new THREE.BoxGeometry(0.20, 0.75, 0.20);
-            leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : pinkMat);
-            leftArm.position.set(isSekato ? -0.50 : -0.44, 1.25, 0);
+            const armGeo = new THREE.BoxGeometry(isSekato ? 0.20 : 0.24, 0.75, isSekato ? 0.20 : 0.24);
+            leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : darkMat);
+            leftArm.position.set(isSekato ? -0.50 : -0.48, 1.25, 0);
             characterMeshGroup.add(leftArm);
 
-            rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : pinkMat);
-            rightArm.position.set(isSekato ? 0.50 : 0.44, 1.25, 0);
+            rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : darkMat);
+            rightArm.position.set(isSekato ? 0.50 : 0.48, 1.25, 0);
             characterMeshGroup.add(rightArm);
 
-            const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.20, 0.7, isSekato ? 0.24 : 0.20);
-            leftLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : skinMat);
-            leftLeg.position.set(isSekato ? -0.2 : -0.16, 0.42, 0);
+            const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.28, 0.7, isSekato ? 0.24 : 0.28);
+            leftLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
+            leftLeg.position.set(isSekato ? -0.2 : -0.18, 0.42, 0);
             
-            const shoeGeo = new THREE.BoxGeometry(0.24, 0.18, 0.38);
+            const shoeGeo = new THREE.BoxGeometry(0.26, 0.18, 0.4);
             const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
             leftShoe.position.set(0, -0.35, 0.08);
             leftLeg.add(leftShoe);
             characterMeshGroup.add(leftLeg);
 
-            rightLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : skinMat);
-            rightLeg.position.set(isSekato ? 0.2 : 0.16, 0.42, 0);
+            rightLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
+            rightLeg.position.set(isSekato ? 0.2 : 0.18, 0.42, 0);
 
             const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
             rightShoe.position.set(0, -0.35, 0.08);
@@ -678,7 +664,6 @@
             buildHumanoidCharacter();
         }
 
-        // FULL LOBBY VIEW POSITIONING (Shows complete character standing)
         function setupCameraForLobby() {
             camera.position.set(0, 1.8, -6.0);
             camera.lookAt(0, 1.1, 0);
@@ -732,7 +717,6 @@
             const obsGroup = new THREE.Group();
 
             if (randType < 0.35) {
-                // LOW HURDLE (Easily jumpable)
                 const hurdleGeo = new THREE.BoxGeometry(2.4, 0.4, 0.4);
                 const hurdleMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const hurdle = new THREE.Mesh(hurdleGeo, hurdleMat);
