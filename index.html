@@ -668,6 +668,9 @@
 
         function setupCameraForGame() {
             playerGroup.rotation.y = 0;
+            // IMMERSIVE START POSITION INSIDE THE BUILDING/STREET CANYON
+            camera.position.set(0, 4.2, -7.5);
+            camera.lookAt(0, 1.6, 7);
         }
 
         function spawnTrackTile(zPos) {
@@ -679,7 +682,6 @@
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            // DETAILED CARTOON TOWN BUILDINGS & ARCHITECTURE INSPIRED BY REFERENCE
             const bColors = [0xff8585, 0xffd166, 0x48cae4, 0x90e0ef, 0xb5179e, 0x4361ee, 0xf77f00];
             for (let side = -1; side <= 1; side += 2) {
                 const bHeight = 16 + Math.random() * 20;
@@ -690,14 +692,12 @@
                 building.position.set(side * 11.5, (bHeight / 2) - 2, zPos + 10);
                 tileGroup.add(building);
 
-                // Multi-tier roof structure or cornice awning detail
                 const roofGeo = new THREE.BoxGeometry(11.9, 1.2, 20.2);
                 const roofMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
                 const roof = new THREE.Mesh(roofGeo, roofMat);
                 roof.position.set(side * 11.5, bHeight - 2.2, zPos + 10);
                 tileGroup.add(roof);
 
-                // Storefront awning / window trim
                 const awningGeo = new THREE.BoxGeometry(1.2, 0.8, 6);
                 const awningMat = new THREE.MeshLambertMaterial({ color: 0xff4500 });
                 const awning = new THREE.Mesh(awningGeo, awningMat);
@@ -890,6 +890,7 @@
 
                 playerGroup.position.z += forwardSpeed;
 
+                // UNIFIED ATHLETIC SPRINT ANIMATION FOR BOTH CHARACTERS
                 runAnimTime += forwardSpeed * 1.25;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
                     leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
