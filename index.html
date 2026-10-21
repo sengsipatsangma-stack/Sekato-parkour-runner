@@ -332,7 +332,7 @@
         let gameState = 'MENU';
 
         let currentLane = 1;
-        const laneX = [-3.2, 0, 3.2];
+        const laneX = [3.2, 0, -3.2]; // Lane index 0 = Left (+3.2), Index 2 = Right (-3.2)
         let forwardSpeed = 0.48;
         const maxSpeed = 1.05;
         let distanceTraveled = 0;
@@ -633,17 +633,17 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED CORRECTED TOUCH SWIPE CONTROLS (LEFT -> DECREASES LANE, RIGHT -> INCREASES LANE)
+            // NATURAL NON-INVERTED CONTROLS: SWIPE LEFT MOVES LEFT, SWIPE RIGHT MOVES RIGHT
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx < -8 && currentLane > 0) {
-                        currentLane--;
-                    } else if (dx > 8 && currentLane < 2) {
-                        currentLane++;
+                    if (dx < -8 && currentLane < 2) {
+                        currentLane++; // Swipe Left moves left on screen
+                    } else if (dx > 8 && currentLane > 0) {
+                        currentLane--; // Swipe Right moves right on screen
                     }
                 } else {
                     if (dy < -8 && !isJumping && !isSliding) {
@@ -659,8 +659,8 @@
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
-                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
-                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane < 2) currentLane++;
+                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane > 0) currentLane--;
                 if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
@@ -876,7 +876,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'car', depth: 4.5 };
             } else {
-                // THIN SLIDE BARRIER (REPLACED WIDE TABLE WITH A THIN SLEEK BAR)
+                // THIN SLIDE BARRIER
                 const thinBarDepth = 0.4;
                 const barGeo = new THREE.BoxGeometry(2.8, 0.3, thinBarDepth);
                 const barMat = new THREE.MeshLambertMaterial({ color: 0x00ffcc, emissive: 0x004433 });
@@ -924,7 +924,7 @@
                 characterMeshGroup.rotation.z = 0;
                 characterMeshGroup.position.y = 0;
                 playerGroup.position.y = 0;
-            }, 260); // ULTRA-FAST RECOVER SLIDE
+            }, 260);
         }
 
         function startGame() {
@@ -957,7 +957,7 @@
                 document.getElementById('coin-val').innerText = coinsCollected;
 
                 const targetX = laneX[currentLane];
-                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.92; // NEAR INSTANT LANE SWITCH
+                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.92;
 
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
@@ -998,8 +998,6 @@
                 
                 const targetCamX = playerGroup.position.x * 0.35;
                 camera.position.x += (targetCamX - camera.position.x) * 0.1;
-                
-                // Zero out roll tilt completely to eliminate shaking
                 camera.rotation.z = 0;
 
                 camera.lookAt(playerGroup.position.x * 0.5, 0.6, playerGroup.position.z + 7);
