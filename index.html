@@ -342,8 +342,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.045;
-        const jumpPower = 0.58;
+        const gravity = -0.05;
+        const jumpPower = 0.55;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -608,7 +608,7 @@
                     if (dx > 20 && currentLane > 0) currentLane--;      
                     else if (dx < -20 && currentLane < 2) currentLane++;  
                 } else {
-                    if (dy < -20 && !isJumping) { // PREVENT DOUBLE JUMP FLYING
+                    if (dy < -20 && !isJumping && !isSliding) {
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
@@ -623,7 +623,7 @@
                 if (gameState !== 'PLAYING') return;
                 if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
                 if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
-                if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping) { 
+                if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
                     playSound('jump');
@@ -652,7 +652,6 @@
 
             const charRoot = new THREE.Group();
 
-            // CUTE ROUND HEAD AT GROUND RELATIVE HEIGHT
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.52, 0.52), skinMat);
             head.position.y = 1.35;
 
@@ -877,6 +876,7 @@
         function triggerSlide() {
             isJumping = false;
             verticalVelocity = 0;
+            playerGroup.position.y = 0; // INSTANTLY RESET Y TO GROUND
             isSliding = true;
             rollAngle = 0;
             playSound('roll');
@@ -885,7 +885,8 @@
                 characterMeshGroup.rotation.x = 0;
                 characterMeshGroup.rotation.z = 0;
                 characterMeshGroup.position.y = 0;
-            }, 750);
+                playerGroup.position.y = 0;
+            }, 600);
         }
 
         function startGame() {
@@ -899,7 +900,7 @@
             forwardSpeed = 0.38;
             currentLane = 1;
             reviveCost = 20;
-            playerGroup.position.set(0, 0, 0); // STRICT GROUND RESET
+            playerGroup.position.set(0, 0, 0);
             setupCameraForGame();
         }
 
@@ -918,27 +919,27 @@
                 const targetX = laneX[currentLane];
                 playerGroup.position.x += (targetX - playerGroup.position.x) * 0.4;
 
-                // FIXED JUMP & GRAVITY PHYSICS (CLAMPS STRICTLY TO GROUND Y = 0)
+                // STRICT GROUND GRAVITY CLAMPING
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
                     verticalVelocity += gravity;
                     if (playerGroup.position.y <= 0) {
-                        playerGroup.position.y = 0; // Prevent sinking into ground or floating
+                        playerGroup.position.y = 0;
+                        verticalVelocity = 0;
                         isJumping = false;
                     }
-                } else {
-                    playerGroup.position.y = 0; // Strict Ground Clamp
+                } else if (!isSliding) {
+                    playerGroup.position.y = 0;
                 }
 
                 if (isSliding) {
-                    rollAngle += 0.35;
+                    rollAngle += 0.4;
                     characterMeshGroup.rotation.x = rollAngle;
                     characterMeshGroup.rotation.z = 0;
-                    characterMeshGroup.position.y = 0.05;
+                    playerGroup.position.y = 0;
                 } else {
                     characterMeshGroup.rotation.x = 0;
                     characterMeshGroup.rotation.z = 0;
-                    characterMeshGroup.position.y = 0;
                 }
 
                 playerGroup.position.z += forwardSpeed;
@@ -953,7 +954,7 @@
                 }
 
                 camera.position.z = playerGroup.position.z - 6.5;
-                camera.position.y = playerGroup.position.y + 2.8;
+                camera.position.y = 2.8;
                 
                 const targetCamX = playerGroup.position.x * 0.35;
                 camera.position.x += (targetCamX - camera.position.x) * 0.2;
@@ -961,9 +962,8 @@
                 const targetRollTilt = -(playerGroup.position.x - targetX) * 0.08;
                 camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.15;
 
-                camera.lookAt(playerGroup.position.x * 0.2, playerGroup.position.y + 1.1, playerGroup.position.z + 7);
+                camera.lookAt(playerGroup.position.x * 0.2, 1.1, playerGroup.position.z + 7);
 
-                // RELIABLE INFINITE TRACK RECYCLING
                 const firstTile = trackTiles[0];
                 if (firstTile && playerGroup.position.z - firstTile.z > 60) {
                     const removedTile = trackTiles.shift();
@@ -1054,6 +1054,8 @@
                 startBackgroundMusic();
                 playerGroup.position.z += 6;
                 playerGroup.position.y = 0;
+                isJumping = false;
+                isSliding = false;
                 document.getElementById('gameover-screen').style.display = 'none';
             } else {
                 alert("Not enough coins!");
