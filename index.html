@@ -342,8 +342,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.048;
-        const jumpPower = 0.62;
+        const gravity = -0.045;
+        const jumpPower = 0.58;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -371,7 +371,7 @@
                 selectedCharacter = 'Sekato';
             }
             updateCharacterLobbyCard();
-            if (characterMeshGroup) buildHumanoidCharacter();
+            if (characterMeshGroup) buildCuteCharacter();
         }
 
         function loadStorageData() {
@@ -394,7 +394,7 @@
                 selectedCharacter = 'Sekato';
             }
             updateCharacterLobbyCard();
-            if (characterMeshGroup) buildHumanoidCharacter();
+            if (characterMeshGroup) buildCuteCharacter();
         }
 
         function updateCharacterLobbyCard() {
@@ -562,9 +562,9 @@
             
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x70c5ce);
-            scene.fog = new THREE.FogExp2(0x70c5ce, 0.003); // Lighter fog so track is clear far ahead
+            scene.fog = new THREE.FogExp2(0x70c5ce, 0.003);
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400); // 400 Far Clip
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
             
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -584,7 +584,6 @@
             characterMeshGroup = new THREE.Group();
             playerGroup.add(characterMeshGroup);
 
-            // INITIAL TRACK GENERATION (25 tiles = 500 units buffer depth)
             for (let i = 0; i < 25; i++) {
                 spawnTrackTile(i * 20);
             }
@@ -609,7 +608,7 @@
                     if (dx > 20 && currentLane > 0) currentLane--;      
                     else if (dx < -20 && currentLane < 2) currentLane++;  
                 } else {
-                    if (dy < -20) {
+                    if (dy < -20 && !isJumping) { // PREVENT DOUBLE JUMP FLYING
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
@@ -624,7 +623,7 @@
                 if (gameState !== 'PLAYING') return;
                 if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
                 if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
-                if ((e.key === 'ArrowUp' || e.key === 'w')) { 
+                if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
                     playSound('jump');
@@ -637,8 +636,8 @@
             animate();
         }
 
-        // CUTE CHIBI CHARACTER BUILDER
-        function buildHumanoidCharacter() {
+        // CUTE ANCHORED CHIBI CHARACTER MODEL
+        function buildCuteCharacter() {
             while (characterMeshGroup.children.length > 0) {
                 characterMeshGroup.remove(characterMeshGroup.children[0]);
             }
@@ -653,9 +652,9 @@
 
             const charRoot = new THREE.Group();
 
-            // ROUNDED CUTE HEAD WITH BIG EYES
+            // CUTE ROUND HEAD AT GROUND RELATIVE HEIGHT
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.52, 0.52), skinMat);
-            head.position.y = 1.9;
+            head.position.y = 1.35;
 
             const eyeMat = new THREE.MeshLambertMaterial({ color: 0x0044cc });
             const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.04), eyeMat);
@@ -674,64 +673,64 @@
             if (isSekato) {
                 for (let i = 0; i < 5; i++) {
                     const spike = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 4), hairMat);
-                    spike.position.set((i - 2) * 0.1, 2.25, 0);
+                    spike.position.set((i - 2) * 0.1, 1.7, 0);
                     charRoot.add(spike);
                 }
             } else {
                 const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.3, 0.58), hairMat);
-                hairTop.position.set(0, 2.12, 0);
+                hairTop.position.set(0, 1.57, 0);
                 charRoot.add(hairTop);
 
                 const pigtailGeo = new THREE.BoxGeometry(0.18, 0.6, 0.18);
                 const leftPigtail = new THREE.Mesh(pigtailGeo, hairMat);
-                leftPigtail.position.set(-0.34, 1.8, -0.1);
+                leftPigtail.position.set(-0.34, 1.25, -0.1);
                 const rightPigtail = new THREE.Mesh(pigtailGeo, hairMat);
-                rightPigtail.position.set(0.34, 1.8, -0.1);
+                rightPigtail.position.set(0.34, 1.25, -0.1);
                 charRoot.add(leftPigtail);
                 charRoot.add(rightPigtail);
             }
 
             if (isSekato) {
-                const leftTorso = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.7, 0.35), blueMat);
-                leftTorso.position.set(-0.11, 1.25, 0);
+                const leftTorso = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.55, 0.35), blueMat);
+                leftTorso.position.set(-0.11, 0.78, 0);
                 charRoot.add(leftTorso);
 
-                const rightTorso = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.7, 0.35), redMat);
-                rightTorso.position.set(0.11, 1.25, 0);
+                const rightTorso = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.55, 0.35), redMat);
+                rightTorso.position.set(0.11, 0.78, 0);
                 charRoot.add(rightTorso);
             } else {
-                const dress = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.36), new THREE.MeshLambertMaterial({ color: 0xff66b2 }));
-                dress.position.set(0, 1.25, 0);
+                const dress = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.36), new THREE.MeshLambertMaterial({ color: 0xff66b2 }));
+                dress.position.set(0, 0.78, 0);
                 charRoot.add(dress);
             }
 
-            const armGeo = new THREE.BoxGeometry(0.16, 0.65, 0.16);
+            const armGeo = new THREE.BoxGeometry(0.16, 0.5, 0.16);
             leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : skinMat);
-            leftArm.position.set(-0.35, 1.25, 0);
-            leftArm.geometry.translate(0, -0.25, 0);
+            leftArm.position.set(-0.35, 0.78, 0);
+            leftArm.geometry.translate(0, -0.2, 0);
             charRoot.add(leftArm);
 
             rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : skinMat);
-            rightArm.position.set(0.35, 1.25, 0);
-            rightArm.geometry.translate(0, -0.25, 0);
+            rightArm.position.set(0.35, 0.78, 0);
+            rightArm.geometry.translate(0, -0.2, 0);
             charRoot.add(rightArm);
 
-            const legGeo = new THREE.BoxGeometry(0.18, 0.7, 0.18);
+            const legGeo = new THREE.BoxGeometry(0.18, 0.5, 0.18);
             leftLeg = new THREE.Mesh(legGeo, darkMat);
-            leftLeg.position.set(-0.13, 0.8, 0);
-            leftLeg.geometry.translate(0, -0.3, 0);
+            leftLeg.position.set(-0.13, 0.5, 0);
+            leftLeg.geometry.translate(0, -0.25, 0);
 
-            const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.36), shoeMat);
-            leftShoe.position.set(0, -0.65, 0.08);
+            const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.36), shoeMat);
+            leftShoe.position.set(0, -0.45, 0.08);
             leftLeg.add(leftShoe);
             charRoot.add(leftLeg);
 
             rightLeg = new THREE.Mesh(legGeo, darkMat);
-            rightLeg.position.set(0.13, 0.8, 0);
-            rightLeg.geometry.translate(0, -0.3, 0);
+            rightLeg.position.set(0.13, 0.5, 0);
+            rightLeg.geometry.translate(0, -0.25, 0);
 
-            const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.36), shoeMat);
-            rightShoe.position.set(0, -0.65, 0.08);
+            const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.36), shoeMat);
+            rightShoe.position.set(0, -0.45, 0.08);
             rightLeg.add(rightShoe);
             charRoot.add(rightLeg);
 
@@ -739,17 +738,17 @@
         }
 
         function setupCameraForLobby() {
-            camera.position.set(0, 1.8, -6.0);
+            camera.position.set(0, 1.4, -5.0);
             camera.rotation.set(0, 0, 0);
-            camera.lookAt(0, 1.1, 0);
+            camera.lookAt(0, 0.9, 0);
             playerGroup.position.set(0, 0, 0);
             playerGroup.rotation.y = Math.PI;
         }
 
         function setupCameraForGame() {
             playerGroup.rotation.y = 0;
-            camera.position.set(0, 4.2, -7.5);
-            camera.lookAt(0, 1.6, 7);
+            camera.position.set(0, 2.8, -6.5);
+            camera.lookAt(0, 1.1, 7);
         }
 
         function spawnTrackTile(zPos) {
@@ -813,7 +812,7 @@
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
-                lowBar.position.y = 2.2;
+                lowBar.position.y = 2.0;
                 obsGroup.add(lowBar);
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
@@ -821,11 +820,11 @@
             } else if (randType < 0.8) {
                 const carBodyMat = new THREE.MeshLambertMaterial({ color: 0x2255ff });
                 const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 4.5), carBodyMat);
-                carBody.position.y = 0.7;
+                carBody.position.y = 0.5;
                 obsGroup.add(carBody);
 
                 const carRoof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.8, 2.2), new THREE.MeshLambertMaterial({ color: 0x112266 }));
-                carRoof.position.set(0, 1.4, -0.2);
+                carRoof.position.set(0, 1.2, -0.2);
                 obsGroup.add(carRoof);
 
                 const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
@@ -845,7 +844,7 @@
                 const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
                 const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
                 const tableTop = new THREE.Mesh(topGeo, topMat);
-                tableTop.position.y = 1.25;
+                tableTop.position.y = 1.1;
                 obsGroup.add(tableTop);
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
@@ -869,7 +868,7 @@
                 const geo = new THREE.CylinderGeometry(0.4, 0.4, 0.12, 16);
                 const coin = new THREE.Mesh(geo, coinMat);
                 coin.rotation.x = Math.PI / 2;
-                coin.position.set(laneX[lane], 1.2, zPos + (i * 2.2));
+                coin.position.set(laneX[lane], 1.0, zPos + (i * 2.2));
                 scene.add(coin);
                 activeCoins.push(coin);
             }
@@ -900,7 +899,7 @@
             forwardSpeed = 0.38;
             currentLane = 1;
             reviveCost = 20;
-            playerGroup.position.set(0, 0, 0);
+            playerGroup.position.set(0, 0, 0); // STRICT GROUND RESET
             setupCameraForGame();
         }
 
@@ -919,13 +918,16 @@
                 const targetX = laneX[currentLane];
                 playerGroup.position.x += (targetX - playerGroup.position.x) * 0.4;
 
+                // FIXED JUMP & GRAVITY PHYSICS (CLAMPS STRICTLY TO GROUND Y = 0)
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
                     verticalVelocity += gravity;
                     if (playerGroup.position.y <= 0) {
-                        playerGroup.position.y = 0;
+                        playerGroup.position.y = 0; // Prevent sinking into ground or floating
                         isJumping = false;
                     }
+                } else {
+                    playerGroup.position.y = 0; // Strict Ground Clamp
                 }
 
                 if (isSliding) {
@@ -950,8 +952,8 @@
                     characterMeshGroup.rotation.z = 0;
                 }
 
-                camera.position.z = playerGroup.position.z - 7.5;
-                camera.position.y = 4.2;
+                camera.position.z = playerGroup.position.z - 6.5;
+                camera.position.y = playerGroup.position.y + 2.8;
                 
                 const targetCamX = playerGroup.position.x * 0.35;
                 camera.position.x += (targetCamX - camera.position.x) * 0.2;
@@ -959,9 +961,9 @@
                 const targetRollTilt = -(playerGroup.position.x - targetX) * 0.08;
                 camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.15;
 
-                camera.lookAt(playerGroup.position.x * 0.2, 1.6, playerGroup.position.z + 7);
+                camera.lookAt(playerGroup.position.x * 0.2, playerGroup.position.y + 1.1, playerGroup.position.z + 7);
 
-                // RELIABLE INFINITE TRACK RECYCLING LOGIC (FILED BUG FIX)
+                // RELIABLE INFINITE TRACK RECYCLING
                 const firstTile = trackTiles[0];
                 if (firstTile && playerGroup.position.z - firstTile.z > 60) {
                     const removedTile = trackTiles.shift();
@@ -997,9 +999,9 @@
                         } else if (obs.userData.type === 'roll_only') {
                             if (!isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'car') {
-                            if (playerGroup.position.y < 1.4 && !isSliding) triggerGameOver();
+                            if (playerGroup.position.y < 1.2 && !isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'table') {
-                            const isHighEnough = playerGroup.position.y > 1.0;
+                            const isHighEnough = playerGroup.position.y > 0.9;
                             const isRollingUnder = isSliding;
                             if (!isHighEnough && !isRollingUnder) triggerGameOver();
                         }
@@ -1051,6 +1053,7 @@
                 gameState = 'PLAYING';
                 startBackgroundMusic();
                 playerGroup.position.z += 6;
+                playerGroup.position.y = 0;
                 document.getElementById('gameover-screen').style.display = 'none';
             } else {
                 alert("Not enough coins!");
@@ -1063,7 +1066,7 @@
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
             gameState = 'MENU';
-            buildHumanoidCharacter();
+            buildCuteCharacter();
             setupCameraForLobby();
         }
 
