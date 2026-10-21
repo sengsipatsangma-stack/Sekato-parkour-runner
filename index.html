@@ -66,7 +66,7 @@
             color: #ff4500;
         }
         
-        /* LOBBY UI LAYOUT */
+        /* LOBBY UI OVERLAY */
         #menu-screen {
             position: absolute;
             top: 0;
@@ -79,7 +79,7 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 30px 15px 20px 15px;
+            padding: 25px 15px 20px 15px;
         }
         .header-title-box {
             text-align: center;
@@ -299,6 +299,7 @@
                 </div>
             </div>
 
+            <!-- START BUTTON PLACED AT THE BOTTOM BELOW CHARACTER SHOWCASE -->
             <button class="btn" onclick="startGame()">START RUN</button>
             <div style="display: flex; gap: 8px; width: 100%;">
                 <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 SCORES</button>
@@ -336,8 +337,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.024;
-        const jumpPower = 0.46;
+        const gravity = -0.026;
+        const jumpPower = 0.52; // Higher vertical clearance for hurdles
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -677,9 +678,10 @@
             buildHumanoidCharacter();
         }
 
+        // FULL LOBBY VIEW POSITIONING (Shows complete character standing)
         function setupCameraForLobby() {
-            camera.position.set(0, 1.6, -5.2);
-            camera.lookAt(0, 1.25, 0);
+            camera.position.set(0, 1.8, -6.0);
+            camera.lookAt(0, 1.1, 0);
             playerGroup.position.set(0, 0, 0);
             playerGroup.rotation.y = Math.PI;
         }
@@ -730,17 +732,18 @@
             const obsGroup = new THREE.Group();
 
             if (randType < 0.35) {
-                const hurdleGeo = new THREE.BoxGeometry(2.4, 0.5, 0.4);
+                // LOW HURDLE (Easily jumpable)
+                const hurdleGeo = new THREE.BoxGeometry(2.4, 0.4, 0.4);
                 const hurdleMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const hurdle = new THREE.Mesh(hurdleGeo, hurdleMat);
-                hurdle.position.y = 0.25;
+                hurdle.position.y = 0.2;
                 obsGroup.add(hurdle);
 
-                const stripeGeo = new THREE.BoxGeometry(0.4, 0.52, 0.42);
+                const stripeGeo = new THREE.BoxGeometry(0.4, 0.42, 0.42);
                 const stripeMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
                 for (let s = -0.8; s <= 0.8; s += 0.8) {
                     const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-                    stripe.position.set(s, 0.25, 0);
+                    stripe.position.set(s, 0.2, 0);
                     obsGroup.add(stripe);
                 }
 
@@ -953,7 +956,7 @@
                         Math.abs(obs.position.x - playerGroup.position.x) < 1.1) {
                         
                         if (obs.userData.type === 'jump_only') {
-                            if (playerGroup.position.y < 0.4) triggerGameOver();
+                            if (playerGroup.position.y < 0.35) triggerGameOver();
                         } else if (obs.userData.type === 'roll_only' || obs.userData.type === 'hole_wall') {
                             if (!isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'table') {
