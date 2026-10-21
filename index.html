@@ -137,7 +137,7 @@
             background: rgba(40, 65, 95, 0.9);
         }
         .char-icon {
-            font-size: 28px;
+            font-size: 26px;
         }
         .char-name {
             color: #fff;
@@ -290,11 +290,11 @@
         <div class="lobby-bottom-panel">
             <div class="character-select">
                 <div class="char-card selected" id="card-sekato" onclick="selectChar('Sekato')">
-                    <div class="char-icon">🔥</div>
+                    <div class="char-icon">👦</div>
                     <div class="char-name">SEKATO (♂)</div>
                 </div>
                 <div class="char-card" id="card-aika" onclick="selectChar('Aika')">
-                    <div class="char-icon">⚡</div>
+                    <div class="char-icon">👧</div>
                     <div class="char-name">AIKA (♀)</div>
                 </div>
             </div>
@@ -335,8 +335,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.026;
-        const jumpPower = 0.52;
+        const gravity = -0.048;   // High gravity for fast ground return
+        const jumpPower = 0.62;   // Crisp high jump
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -394,7 +394,6 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             
-            // UNIQUE LEADERBOARD: Aggregate highest score per player name
             const bestScoresMap = {};
             playerData.scores.forEach(entry => {
                 const key = entry.name.toLowerCase();
@@ -575,15 +574,10 @@
                 rightBody.position.set(0.19, 1.25, 0);
                 torsoGroup.add(rightBody);
             } else {
-                const cropGeo = new THREE.BoxGeometry(0.66, 0.52, 0.40);
-                const crop = new THREE.Mesh(cropGeo, darkMat);
-                crop.position.set(0, 1.45, 0);
-                torsoGroup.add(crop);
-
-                const midGeo = new THREE.BoxGeometry(0.58, 0.22, 0.36);
-                const mid = new THREE.Mesh(midGeo, skinMat);
-                mid.position.set(0, 1.05, 0);
-                torsoGroup.add(mid);
+                const torsoGeo = new THREE.BoxGeometry(0.64, 0.95, 0.40);
+                const solidTorso = new THREE.Mesh(torsoGeo, darkMat);
+                solidTorso.position.set(0, 1.25, 0);
+                torsoGroup.add(solidTorso);
             }
             characterMeshGroup.add(torsoGroup);
 
@@ -629,18 +623,18 @@
                 characterMeshGroup.add(longHair);
             }
 
-            const armGeo = new THREE.BoxGeometry(isSekato ? 0.20 : 0.24, 0.75, isSekato ? 0.20 : 0.24);
+            const armGeo = new THREE.BoxGeometry(0.22, 0.75, 0.22);
             leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : darkMat);
-            leftArm.position.set(isSekato ? -0.50 : -0.48, 1.25, 0);
+            leftArm.position.set(isSekato ? -0.50 : -0.46, 1.25, 0);
             characterMeshGroup.add(leftArm);
 
             rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : darkMat);
-            rightArm.position.set(isSekato ? 0.50 : 0.48, 1.25, 0);
+            rightArm.position.set(isSekato ? 0.50 : 0.46, 1.25, 0);
             characterMeshGroup.add(rightArm);
 
-            const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.28, 0.7, isSekato ? 0.24 : 0.28);
+            const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.26, 0.7, isSekato ? 0.24 : 0.26);
             leftLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
-            leftLeg.position.set(isSekato ? -0.2 : -0.18, 0.42, 0);
+            leftLeg.position.set(isSekato ? -0.2 : -0.16, 0.42, 0);
             
             const shoeGeo = new THREE.BoxGeometry(0.26, 0.18, 0.4);
             const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
@@ -649,7 +643,7 @@
             characterMeshGroup.add(leftLeg);
 
             rightLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
-            rightLeg.position.set(isSekato ? 0.2 : 0.18, 0.42, 0);
+            rightLeg.position.set(isSekato ? 0.2 : 0.16, 0.42, 0);
 
             const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
             rightShoe.position.set(0, -0.35, 0.08);
@@ -666,6 +660,7 @@
 
         function setupCameraForLobby() {
             camera.position.set(0, 1.8, -6.0);
+            camera.rotation.set(0, 0, 0);
             camera.lookAt(0, 1.1, 0);
             playerGroup.position.set(0, 0, 0);
             playerGroup.rotation.y = Math.PI;
@@ -874,14 +869,14 @@
                 }
 
                 if (isSliding) {
-                    rollAngle += 0.3;
+                    rollAngle += 0.35;
                     if (selectedCharacter === 'Sekato') {
                         characterMeshGroup.rotation.x = rollAngle;
-                        characterMeshGroup.position.y = 0.25;
+                        characterMeshGroup.position.y = 0.15 + Math.sin(rollAngle) * 0.1;
                     } else {
                         characterMeshGroup.rotation.z = rollAngle;
-                        characterMeshGroup.rotation.x = 0.3;
-                        characterMeshGroup.position.y = 0.22;
+                        characterMeshGroup.rotation.x = 0.4;
+                        characterMeshGroup.position.y = 0.12 + Math.sin(rollAngle) * 0.08;
                     }
                 } else {
                     characterMeshGroup.rotation.x = 0;
@@ -891,26 +886,34 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                runAnimTime += forwardSpeed * 1.15;
+                runAnimTime += forwardSpeed * 1.25;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
                     if (selectedCharacter === 'Sekato') {
-                        leftArm.rotation.x = Math.sin(runAnimTime) * 0.85;
-                        rightArm.rotation.x = -Math.sin(runAnimTime) * 0.85;
-                        leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.95;
-                        rightLeg.rotation.x = Math.sin(runAnimTime) * 0.95;
+                        leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
+                        rightArm.rotation.x = -Math.sin(runAnimTime) * 0.75;
+                        leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.85;
+                        rightLeg.rotation.x = Math.sin(runAnimTime) * 0.85;
                         characterMeshGroup.rotation.z = 0;
                     } else {
                         leftArm.rotation.x = Math.sin(runAnimTime) * 0.65;
                         rightArm.rotation.x = -Math.sin(runAnimTime) * 0.65;
                         leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.75;
                         rightLeg.rotation.x = Math.sin(runAnimTime) * 0.75;
-                        characterMeshGroup.rotation.z = Math.sin(runAnimTime * 0.5) * 0.08;
+                        characterMeshGroup.rotation.z = Math.sin(runAnimTime * 0.6) * 0.06;
                     }
                 }
 
+                // DYNAMIC CAMERA BANKING / SCREEN TILT & POSITIONING
                 camera.position.z = playerGroup.position.z - 7.5;
                 camera.position.y = 4.2;
-                camera.position.x = playerGroup.position.x * 0.35;
+                
+                // Screen shifts with player X and banks (tilts) towards movement direction
+                const targetCamX = playerGroup.position.x * 0.35;
+                camera.position.x += (targetCamX - camera.position.x) * 0.2;
+                
+                const targetRollTilt = -(playerGroup.position.x - targetX) * 0.08;
+                camera.rotation.z += (targetRollTilt - camera.rotation.z) * 0.15;
+
                 camera.lookAt(playerGroup.position.x * 0.2, 1.6, playerGroup.position.z + 7);
 
                 const lastTileZ = trackTiles[trackTiles.length - 1].z;
