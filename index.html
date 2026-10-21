@@ -633,20 +633,20 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED SWIPE CONTROL LOGIC: LEFT -> MOVE LEFT, RIGHT -> MOVE RIGHT
+            // TOUCH CONTROLS (DIRECT PERSPECTIVE: SWIPE LEFT MOVES LEFT, SWIPE RIGHT MOVES RIGHT)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // SWIPE LEFT (dx < -20) -> MOVE LEFT
-                    if (dx < -20 && currentLane > 0) {
-                        currentLane--;
-                    }
-                    // SWIPE RIGHT (dx > 20) -> MOVE RIGHT
-                    else if (dx > 20 && currentLane < 2) {
+                    // SWIPE LEFT -> Moves character to LEFT lane
+                    if (dx < -20 && currentLane < 2) {
                         currentLane++;
+                    }
+                    // SWIPE RIGHT -> Moves character to RIGHT lane
+                    else if (dx > 20 && currentLane > 0) {
+                        currentLane--;
                     }
                 } else {
                     if (dy < -20 && !isJumping && !isSliding) {
@@ -662,8 +662,8 @@
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
-                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
-                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane < 2) currentLane++;
+                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane > 0) currentLane--;
                 if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
