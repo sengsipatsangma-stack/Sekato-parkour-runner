@@ -561,7 +561,6 @@
             } catch (e) {}
         }
 
-        // MUTE SOUND WHEN LEAVING TAB OR MINIMIZING APP
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 stopBackgroundMusic();
@@ -634,18 +633,18 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // UPDATED TOUCH CONTROLS: SWIPE LEFT -> MOVE LEFT, SWIPE RIGHT -> MOVE RIGHT
+            // FIXED SWIPE CONTROL LOGIC: LEFT -> MOVE LEFT, RIGHT -> MOVE RIGHT
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // SWIPE LEFT (dx < 0) -> CHARACTER MOVES LEFT (currentLane decreases)
+                    // SWIPE LEFT (dx < -20) -> MOVE LEFT
                     if (dx < -20 && currentLane > 0) {
                         currentLane--;
                     }
-                    // SWIPE RIGHT (dx > 0) -> CHARACTER MOVES RIGHT (currentLane increases)
+                    // SWIPE RIGHT (dx > 20) -> MOVE RIGHT
                     else if (dx > 20 && currentLane < 2) {
                         currentLane++;
                     }
