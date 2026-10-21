@@ -310,7 +310,7 @@
     <!-- GAME OVER SCREEN -->
     <div id="gameover-screen" class="modal" style="display: none;">
         <div class="modal-title" style="color: #ff1744;">GAME OVER</div>
-        <div id="high-score-badge" style="color: #ffcc00; font-size: 20px; margin: 8px 0; font-weight: 800; display: none;">🏆 NEW HIGH SCORE!</div>
+        <div id="high-score-badge" style="color: #ffd700; font-size: 20px; margin: 8px 0; font-weight: 800; display: none;">🎉 CONGRATULATIONS YOU GOT A HIGH SCORE!</div>
         <div class="subtitle" id="final-stats" style="font-size: 16px; margin: 10px 0;">Distance: 0.0 km | Coins: 0</div>
 
         <button class="btn" id="revive-btn" onclick="reviveRun()" style="background: linear-gradient(45deg, #00b0ff, #00e676); margin-bottom: 10px;">REVIVE (20 🪙)</button>
@@ -557,98 +557,100 @@
             const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa });
             const blueMat = new THREE.MeshLambertMaterial({ color: 0x0055ff });
             const redMat = new THREE.MeshLambertMaterial({ color: 0xff2200 });
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
             const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 });
             const shoeMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xeeeeee : 0xff3388 });
 
-            const torsoGroup = new THREE.Group();
+            const characterRoot = new THREE.Group();
 
+            // HUMAN-LIKE PROPORTIONED TORSO
             if (isSekato) {
-                const leftBodyGeo = new THREE.BoxGeometry(0.38, 0.95, 0.45);
-                const leftBody = new THREE.Mesh(leftBodyGeo, blueMat);
-                leftBody.position.set(-0.19, 1.25, 0);
-                torsoGroup.add(leftBody);
+                const leftTorso = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.65, 0.32), blueMat);
+                leftTorso.position.set(-0.12, 1.25, 0);
+                characterRoot.add(leftTorso);
 
-                const rightBodyGeo = new THREE.BoxGeometry(0.38, 0.95, 0.45);
-                const rightBody = new THREE.Mesh(rightBodyGeo, redMat);
-                rightBody.position.set(0.19, 1.25, 0);
-                torsoGroup.add(rightBody);
+                const rightTorso = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.65, 0.32), redMat);
+                rightTorso.position.set(0.12, 1.25, 0);
+                characterRoot.add(rightTorso);
             } else {
-                const torsoGeo = new THREE.BoxGeometry(0.64, 0.95, 0.40);
-                const solidTorso = new THREE.Mesh(torsoGeo, darkMat);
-                solidTorso.position.set(0, 1.25, 0);
-                torsoGroup.add(solidTorso);
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.32), darkMat);
+                torso.position.set(0, 1.25, 0);
+                characterRoot.add(torso);
             }
-            characterMeshGroup.add(torsoGroup);
 
-            const headGeo = new THREE.BoxGeometry(0.48, 0.48, 0.48);
-            const head = new THREE.Mesh(headGeo, skinMat);
-            head.position.y = 1.95;
-            
-            const eyeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.05);
+            // NECK & ROUNDER HEAD
+            const neck = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 0.14), skinMat);
+            neck.position.set(0, 1.63, 0);
+            characterRoot.add(neck);
+
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.38), skinMat);
+            head.position.set(0, 1.9, 0);
+
             const eyeMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0088ff : 0xff1493 });
-            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-            leftEye.position.set(-0.13, 0.05, 0.24);
-            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-            rightEye.position.set(0.13, 0.05, 0.24);
+            const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), eyeMat);
+            leftEye.position.set(-0.1, 0.04, 0.2);
+            const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.04), eyeMat);
+            rightEye.position.set(0.1, 0.04, 0.2);
             head.add(leftEye);
             head.add(rightEye);
 
             if (isSekato) {
-                const markGeo = new THREE.BoxGeometry(0.08, 0.2, 0.06);
-                const markMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-                const m1 = new THREE.Mesh(markGeo, markMat);
-                m1.position.set(0, 0.15, 0.24);
-                head.add(m1);
+                const mark = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.05), darkMat);
+                mark.position.set(0, 0.12, 0.2);
+                head.add(mark);
             }
+            characterRoot.add(head);
 
-            characterMeshGroup.add(head);
-
+            // HAIR STYLING
             if (isSekato) {
-                for (let i = 0; i < 5; i++) {
-                    const spikeGeo = new THREE.ConeGeometry(0.18, 0.4, 4);
-                    const spike = new THREE.Mesh(spikeGeo, hairMat);
-                    spike.position.set((i - 2) * 0.12, 2.3, (Math.random() - 0.5) * 0.2);
-                    characterMeshGroup.add(spike);
+                for (let i = 0; i < 4; i++) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 4), hairMat);
+                    spike.position.set((i - 1.5) * 0.1, 2.22, 0);
+                    characterRoot.add(spike);
                 }
             } else {
-                const hairTopGeo = new THREE.BoxGeometry(0.54, 0.3, 0.54);
-                const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
-                hairTop.position.set(0, 2.12, 0);
-                characterMeshGroup.add(hairTop);
+                const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.22, 0.44), hairMat);
+                hairTop.position.set(0, 2.08, 0);
+                characterRoot.add(hairTop);
 
-                const longHairGeo = new THREE.BoxGeometry(0.48, 0.95, 0.22);
-                const longHair = new THREE.Mesh(longHairGeo, hairMat);
-                longHair.position.set(0, 1.55, -0.32);
-                characterMeshGroup.add(longHair);
+                const longHair = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.18), hairMat);
+                longHair.position.set(0, 1.55, -0.26);
+                characterRoot.add(longHair);
             }
 
-            const armGeo = new THREE.BoxGeometry(0.22, 0.75, 0.22);
+            // HUMAN-LIKE ARTICULATED ARMS
+            const armGeo = new THREE.BoxGeometry(0.14, 0.65, 0.14);
             leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : darkMat);
-            leftArm.position.set(isSekato ? -0.50 : -0.46, 1.25, 0);
-            characterMeshGroup.add(leftArm);
+            leftArm.position.set(-0.35, 1.25, 0);
+            leftArm.geometry.translate(0, -0.25, 0);
+            characterRoot.add(leftArm);
 
             rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : darkMat);
-            rightArm.position.set(isSekato ? 0.50 : 0.46, 1.25, 0);
-            characterMeshGroup.add(rightArm);
+            rightArm.position.set(0.35, 1.25, 0);
+            rightArm.geometry.translate(0, -0.25, 0);
+            characterRoot.add(rightArm);
 
-            const legGeo = new THREE.BoxGeometry(isSekato ? 0.24 : 0.26, 0.7, isSekato ? 0.24 : 0.26);
-            leftLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
-            leftLeg.position.set(isSekato ? -0.2 : -0.16, 0.42, 0);
-            
-            const shoeGeo = new THREE.BoxGeometry(0.26, 0.18, 0.4);
-            const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            leftShoe.position.set(0, -0.35, 0.08);
+            // HUMAN-LIKE ARTICULATED LEGS
+            const legGeo = new THREE.BoxGeometry(0.16, 0.75, 0.16);
+            leftLeg = new THREE.Mesh(legGeo, darkMat);
+            leftLeg.position.set(-0.13, 0.85, 0);
+            leftLeg.geometry.translate(0, -0.32, 0);
+
+            const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.15, 0.32), shoeMat);
+            leftShoe.position.set(0, -0.68, 0.06);
             leftLeg.add(leftShoe);
-            characterMeshGroup.add(leftLeg);
+            characterRoot.add(leftLeg);
 
-            rightLeg = new THREE.Mesh(legGeo, isSekato ? darkMat : darkMat);
-            rightLeg.position.set(isSekato ? 0.2 : 0.16, 0.42, 0);
+            rightLeg = new THREE.Mesh(legGeo, darkMat);
+            rightLeg.position.set(0.13, 0.85, 0);
+            rightLeg.geometry.translate(0, -0.32, 0);
 
-            const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
-            rightShoe.position.set(0, -0.35, 0.08);
+            const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.15, 0.32), shoeMat);
+            rightShoe.position.set(0, -0.68, 0.06);
             rightLeg.add(rightShoe);
-            characterMeshGroup.add(rightLeg);
+            characterRoot.add(rightLeg);
+
+            characterMeshGroup.add(characterRoot);
         }
 
         function selectChar(name) {
@@ -668,7 +670,6 @@
 
         function setupCameraForGame() {
             playerGroup.rotation.y = 0;
-            // IMMERSIVE START POSITION INSIDE THE BUILDING/STREET CANYON
             camera.position.set(0, 4.2, -7.5);
             camera.lookAt(0, 1.6, 7);
         }
@@ -890,7 +891,6 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                // UNIFIED ATHLETIC SPRINT ANIMATION FOR BOTH CHARACTERS
                 runAnimTime += forwardSpeed * 1.25;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
                     leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
@@ -966,6 +966,11 @@
             gameState = 'GAMEOVER';
             playSound('crash');
 
+            // Check if this run is a new personal high score for this player name
+            const playerScores = playerData.scores.filter(e => e.name.toLowerCase() === playerData.name.toLowerCase());
+            const previousBest = playerScores.length > 0 ? Math.max(...playerScores.map(e => e.km)) : 0;
+            const isNewHighScore = distanceTraveled > previousBest;
+
             playerData.scores.push({
                 name: playerData.name,
                 gender: playerData.gender,
@@ -974,6 +979,15 @@
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
 
             document.getElementById('final-stats').innerText = `Distance: ${distanceTraveled.toFixed(1)} km | Coins: ${coinsCollected}`;
+            
+            // Show congratulatory badge ONLY if it's a new high score
+            const badge = document.getElementById('high-score-badge');
+            if (isNewHighScore) {
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+
             document.getElementById('revive-btn').innerText = `REVIVE (${reviveCost} 🪙)`;
             document.getElementById('gameover-screen').style.display = 'flex';
         }
