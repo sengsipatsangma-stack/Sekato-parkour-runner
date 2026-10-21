@@ -562,9 +562,9 @@
             
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x70c5ce);
-            scene.fog = new THREE.FogExp2(0x70c5ce, 0.005);
+            scene.fog = new THREE.FogExp2(0x70c5ce, 0.003); // Lighter fog so track is clear far ahead
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400); // 400 Far Clip
             
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -584,7 +584,8 @@
             characterMeshGroup = new THREE.Group();
             playerGroup.add(characterMeshGroup);
 
-            for (let i = 0; i < 20; i++) {
+            // INITIAL TRACK GENERATION (25 tiles = 500 units buffer depth)
+            for (let i = 0; i < 25; i++) {
                 spawnTrackTile(i * 20);
             }
 
@@ -636,6 +637,7 @@
             animate();
         }
 
+        // CUTE CHIBI CHARACTER BUILDER
         function buildHumanoidCharacter() {
             while (characterMeshGroup.children.length > 0) {
                 characterMeshGroup.remove(characterMeshGroup.children[0]);
@@ -651,20 +653,21 @@
 
             const charRoot = new THREE.Group();
 
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
+            // ROUNDED CUTE HEAD WITH BIG EYES
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.52, 0.52), skinMat);
             head.position.y = 1.9;
 
             const eyeMat = new THREE.MeshLambertMaterial({ color: 0x0044cc });
-            const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.04), eyeMat);
-            leftEye.position.set(-0.12, 0.05, 0.25);
-            const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.04), eyeMat);
-            rightEye.position.set(0.12, 0.05, 0.25);
+            const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.04), eyeMat);
+            leftEye.position.set(-0.13, 0.05, 0.26);
+            const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.04), eyeMat);
+            rightEye.position.set(0.13, 0.05, 0.26);
             head.add(leftEye);
             head.add(rightEye);
 
             const smileMat = new THREE.MeshLambertMaterial({ color: 0xff4455 });
             const smile = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.04), smileMat);
-            smile.position.set(0, -0.12, 0.25);
+            smile.position.set(0, -0.12, 0.26);
             head.add(smile);
             charRoot.add(head);
 
@@ -675,7 +678,7 @@
                     charRoot.add(spike);
                 }
             } else {
-                const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.3, 0.56), hairMat);
+                const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.3, 0.58), hairMat);
                 hairTop.position.set(0, 2.12, 0);
                 charRoot.add(hairTop);
 
@@ -958,8 +961,9 @@
 
                 camera.lookAt(playerGroup.position.x * 0.2, 1.6, playerGroup.position.z + 7);
 
+                // RELIABLE INFINITE TRACK RECYCLING LOGIC (FILED BUG FIX)
                 const firstTile = trackTiles[0];
-                if (firstTile && playerGroup.position.z - firstTile.z > 40) {
+                if (firstTile && playerGroup.position.z - firstTile.z > 60) {
                     const removedTile = trackTiles.shift();
                     scene.remove(removedTile.group);
                     
