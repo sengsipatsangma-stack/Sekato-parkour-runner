@@ -557,14 +557,38 @@
             } catch (e) {}
         }
 
+        function resetTrackAndWorld() {
+            // Remove existing track tiles
+            while (trackTiles.length > 0) {
+                const t = trackTiles.pop();
+                scene.remove(t.group);
+            }
+            // Remove existing obstacles
+            while (activeObstacles.length > 0) {
+                const o = activeObstacles.pop();
+                scene.remove(o);
+            }
+            // Remove existing coins
+            while (activeCoins.length > 0) {
+                const c = activeCoins.pop();
+                scene.remove(c);
+            }
+
+            // Spawn 45 initial tiles (900 depth buffer ahead)
+            for (let i = 0; i < 45; i++) {
+                spawnTrackTile(i * 20);
+            }
+        }
+
         function initEngine() {
             const container = document.getElementById('canvas-container');
             
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x70c5ce);
-            scene.fog = new THREE.FogExp2(0x70c5ce, 0.003);
+            scene.fog = new THREE.FogExp2(0x70c5ce, 0.001); // Soft fog so long-distance track remains super crisp
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
+            // Far clip set to 1000 so background buildings never clip out
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -584,10 +608,7 @@
             characterMeshGroup = new THREE.Group();
             playerGroup.add(characterMeshGroup);
 
-            for (let i = 0; i < 25; i++) {
-                spawnTrackTile(i * 20);
-            }
-
+            resetTrackAndWorld();
             loadStorageData();
             setupCameraForLobby();
 
@@ -876,7 +897,7 @@
         function triggerSlide() {
             isJumping = false;
             verticalVelocity = 0;
-            playerGroup.position.y = 0; // INSTANTLY RESET Y TO GROUND
+            playerGroup.position.y = 0;
             isSliding = true;
             rollAngle = 0;
             playSound('roll');
@@ -900,6 +921,8 @@
             forwardSpeed = 0.38;
             currentLane = 1;
             reviveCost = 20;
+            
+            resetTrackAndWorld(); // FRESH TRACK GENERATION ON START
             playerGroup.position.set(0, 0, 0);
             setupCameraForGame();
         }
@@ -919,7 +942,6 @@
                 const targetX = laneX[currentLane];
                 playerGroup.position.x += (targetX - playerGroup.position.x) * 0.4;
 
-                // STRICT GROUND GRAVITY CLAMPING
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
                     verticalVelocity += gravity;
@@ -964,6 +986,7 @@
 
                 camera.lookAt(playerGroup.position.x * 0.2, 1.1, playerGroup.position.z + 7);
 
+                // RECYCLING TILES SAFELY
                 const firstTile = trackTiles[0];
                 if (firstTile && playerGroup.position.z - firstTile.z > 60) {
                     const removedTile = trackTiles.shift();
@@ -1068,6 +1091,8 @@
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
             gameState = 'MENU';
+            
+            resetTrackAndWorld(); // CLEAR WORLD BEFORE RETURNING TO LOBBY
             buildCuteCharacter();
             setupCameraForLobby();
         }
