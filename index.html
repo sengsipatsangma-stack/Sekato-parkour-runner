@@ -342,8 +342,8 @@
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
-        const gravity = -0.05;
-        const jumpPower = 0.55;
+        const gravity = -0.09;
+        const jumpPower = 0.68;
         let rollAngle = 0;
 
         const trackTiles = [];
@@ -633,27 +633,24 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FORCED REVERSED SWIPE CONTROLS (SWIPE LEFT -> INCREASES LANE TO FORCE RIGHT/LEFT CORRECTION)
+            // FAST RESPONSIVE SWIPE CONTROLS
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // SWIPE LEFT -> INCREASES LANE
-                    if (dx < -20 && currentLane < 2) {
+                    if (dx < -15 && currentLane > 0) {
+                        currentLane--;
+                    } else if (dx > 15 && currentLane < 2) {
                         currentLane++;
                     }
-                    // SWIPE RIGHT -> DECREASES LANE
-                    else if (dx > 20 && currentLane > 0) {
-                        currentLane--;
-                    }
                 } else {
-                    if (dy < -20 && !isJumping && !isSliding) {
+                    if (dy < -15 && !isJumping && !isSliding) {
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
-                    } else if (dy > 20) {
+                    } else if (dy > 15) {
                         triggerSlide(); 
                     }
                 }
@@ -662,8 +659,8 @@
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
-                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane < 2) currentLane++;
-                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane > 0) currentLane--;
+                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
+                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
                 if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
@@ -879,7 +876,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'car', depth: 4.5 };
             } else {
-                const tableDepth = 3.2;
+                const tableDepth = 1.8; // SHORTENED TABLE DEPTH SO IT MATCHES THE FAST ROLL
                 const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
                 const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
                 const tableTop = new THREE.Mesh(topGeo, topMat);
@@ -926,7 +923,7 @@
                 characterMeshGroup.rotation.z = 0;
                 characterMeshGroup.position.y = 0;
                 playerGroup.position.y = 0;
-            }, 600);
+            }, 380);
         }
 
         function startGame() {
@@ -959,7 +956,7 @@
                 document.getElementById('coin-val').innerText = coinsCollected;
 
                 const targetX = laneX[currentLane];
-                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.35;
+                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.65;
 
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
@@ -974,7 +971,7 @@
                 }
 
                 if (isSliding) {
-                    rollAngle += 0.4;
+                    rollAngle += 0.6;
                     characterMeshGroup.rotation.x = rollAngle;
                     characterMeshGroup.rotation.z = 0;
                     playerGroup.position.y = 0;
