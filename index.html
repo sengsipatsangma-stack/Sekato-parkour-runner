@@ -195,7 +195,7 @@
         let playerGroup;
         let leftArm, rightArm, leftLeg, rightLeg;
         let selectedCharacter = 'Sekato';
-        let gameState = 'MENU'; // MENU, PLAYING, GAMEOVER
+        let gameState = 'MENU';
 
         let currentLane = 1;
         const laneX = [-3.2, 0, 3.2];
@@ -209,7 +209,7 @@
         let isSliding = false;
         let verticalVelocity = 0;
         const gravity = -0.022;
-        const jumpPower = 0.34; // Lower, tighter jump
+        const jumpPower = 0.34;
 
         let trackTiles = [];
         let obstacles = [];
@@ -292,7 +292,7 @@
             animate();
         }
 
-        // --- DETAILED 3D HUMANOID CHARACTER ---
+        // --- HIGH-DETAIL HUMANOID CHARACTER ---
         function buildHumanoidCharacter() {
             while (playerGroup.children.length > 0) {
                 playerGroup.remove(playerGroup.children[0]);
@@ -300,67 +300,116 @@
 
             const isSekato = selectedCharacter === 'Sekato';
             const skinMat = new THREE.MeshLambertMaterial({ color: 0xffccaa });
-            const hoodieMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0055ff : 0x111111 });
-            const secondaryMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xff2200 : 0x444455 });
-            const pantsMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+            const blueMat = new THREE.MeshLambertMaterial({ color: 0x0055ff });
+            const redMat = new THREE.MeshLambertMaterial({ color: 0xff2200 });
+            const darkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
             const hairMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffffff : 0x111111 });
+            const shoeMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
 
-            // Torso / Hoodie
-            const torsoGeo = new THREE.BoxGeometry(0.75, 0.95, 0.45);
-            const torso = new THREE.Mesh(torsoGeo, hoodieMat);
-            torso.position.y = 1.25;
-            playerGroup.add(torso);
+            // Torso / Split Hoodie
+            const torsoGroup = new THREE.Group();
+            
+            if (isSekato) {
+                // Split Hoodie (Blue Left, Red Right)
+                const leftBodyGeo = new THREE.BoxGeometry(0.38, 0.95, 0.45);
+                const leftBody = new THREE.Mesh(leftBodyGeo, blueMat);
+                leftBody.position.set(-0.19, 1.25, 0);
+                torsoGroup.add(leftBody);
 
-            // Hoodie Hood detail on back
-            const hoodGeo = new THREE.BoxGeometry(0.55, 0.55, 0.25);
-            const hood = new THREE.Mesh(hoodGeo, secondaryMat);
-            hood.position.set(0, 1.5, -0.2);
-            playerGroup.add(hood);
+                const rightBodyGeo = new THREE.BoxGeometry(0.38, 0.95, 0.45);
+                const rightBody = new THREE.Mesh(rightBodyGeo, redMat);
+                rightBody.position.set(0.19, 1.25, 0);
+                torsoGroup.add(rightBody);
+            } else {
+                // Aika - Sleek Black Cropped Hoodie
+                const cropGeo = new THREE.BoxGeometry(0.72, 0.65, 0.42);
+                const crop = new THREE.Mesh(cropGeo, darkMat);
+                crop.position.set(0, 1.4, 0);
+                torsoGroup.add(crop);
 
-            // Head
+                // Midriff
+                const midGeo = new THREE.BoxGeometry(0.65, 0.3, 0.38);
+                const mid = new THREE.Mesh(midGeo, skinMat);
+                mid.position.set(0, 0.95, 0);
+                torsoGroup.add(mid);
+            }
+            playerGroup.add(torsoGroup);
+
+            // Head & Facial Features
             const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             const head = new THREE.Mesh(headGeo, skinMat);
             head.position.y = 1.95;
+            
+            // Eye details
+            const eyeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.05);
+            const eyeMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0x0088ff : 0x222222 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.14, 0.05, 0.25);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(0.14, 0.05, 0.25);
+            head.add(leftEye);
+            head.add(rightEye);
+
+            // Sekato Face Markings
+            if (isSekato) {
+                const markGeo = new THREE.BoxGeometry(0.08, 0.2, 0.06);
+                const markMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+                const m1 = new THREE.Mesh(markGeo, markMat);
+                m1.position.set(0, 0.15, 0.25);
+                head.add(m1);
+            }
+
             playerGroup.add(head);
 
-            // Spiky Hair / Ponytail
+            // Hair Setup
             if (isSekato) {
-                const hairGeo = new THREE.ConeGeometry(0.38, 0.45, 5);
-                const hair = new THREE.Mesh(hairGeo, hairMat);
-                hair.position.set(0, 2.35, 0);
-                playerGroup.add(hair);
+                for (let i = 0; i < 5; i++) {
+                    const spikeGeo = new THREE.ConeGeometry(0.18, 0.4, 4);
+                    const spike = new THREE.Mesh(spikeGeo, hairMat);
+                    spike.position.set((i - 2) * 0.12, 2.3, (Math.random() - 0.5) * 0.2);
+                    playerGroup.add(spike);
+                }
             } else {
-                const hairGeo = new THREE.BoxGeometry(0.55, 0.5, 0.55);
-                const hair = new THREE.Mesh(hairGeo, hairMat);
-                hair.position.set(0, 2.0, 0);
-                playerGroup.add(hair);
-                // Ponytail
-                const tailGeo = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+                const hairTopGeo = new THREE.BoxGeometry(0.56, 0.3, 0.56);
+                const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
+                hairTop.position.set(0, 2.1, 0);
+                playerGroup.add(hairTop);
+
+                // Dynamic Ponytail
+                const tailGeo = new THREE.ConeGeometry(0.2, 0.6, 5);
                 const tail = new THREE.Mesh(tailGeo, hairMat);
-                tail.position.set(0, 1.9, -0.35);
+                tail.rotation.x = -Math.PI / 3;
+                tail.position.set(0, 2.0, -0.4);
                 playerGroup.add(tail);
             }
 
             // Arms
             const armGeo = new THREE.BoxGeometry(0.22, 0.75, 0.22);
-            
-            leftArm = new THREE.Mesh(armGeo, hoodieMat);
+            leftArm = new THREE.Mesh(armGeo, isSekato ? blueMat : darkMat);
             leftArm.position.set(-0.52, 1.25, 0);
             playerGroup.add(leftArm);
 
-            rightArm = new THREE.Mesh(armGeo, hoodieMat);
+            rightArm = new THREE.Mesh(armGeo, isSekato ? redMat : darkMat);
             rightArm.position.set(0.52, 1.25, 0);
             playerGroup.add(rightArm);
 
-            // Legs
-            const legGeo = new THREE.BoxGeometry(0.26, 0.8, 0.26);
-
-            leftLeg = new THREE.Mesh(legGeo, pantsMat);
-            leftLeg.position.set(-0.21, 0.4, 0);
+            // Legs & Shoes
+            const legGeo = new THREE.BoxGeometry(0.24, 0.7, 0.24);
+            leftLeg = new THREE.Mesh(legGeo, darkMat);
+            leftLeg.position.set(-0.2, 0.45, 0);
+            
+            const shoeGeo = new THREE.BoxGeometry(0.26, 0.2, 0.4);
+            const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
+            leftShoe.position.set(0, -0.35, 0.08);
+            leftLeg.add(leftShoe);
             playerGroup.add(leftLeg);
 
-            rightLeg = new THREE.Mesh(legGeo, pantsMat);
-            rightLeg.position.set(0.21, 0.4, 0);
+            rightLeg = new THREE.Mesh(legGeo, darkMat);
+            rightLeg.position.set(0.2, 0.45, 0);
+
+            const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
+            rightShoe.position.set(0, -0.35, 0.08);
+            rightLeg.add(rightShoe);
             playerGroup.add(rightLeg);
         }
 
@@ -375,24 +424,22 @@
             camera.position.set(0, 2.2, -4.2);
             camera.lookAt(0, 1.4, 0);
             playerGroup.position.set(0, 0, 0);
-            playerGroup.rotation.y = Math.PI; // Face the camera in the lobby
+            playerGroup.rotation.y = Math.PI;
         }
 
         function setupCameraForGame() {
-            playerGroup.rotation.y = 0; // Face forward into the run
+            playerGroup.rotation.y = 0;
         }
 
         function spawnTrackTile(zPos) {
             const tileGroup = new THREE.Group();
             
-            // Detailed Street Path
             const geo = new THREE.BoxGeometry(11, 2, 20);
             const mat = new THREE.MeshLambertMaterial({ color: 0xdcd6d0 });
             const tile = new THREE.Mesh(geo, mat);
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            // Vibrant Detailed Cartoon Town Buildings
             const colors = [0xff7b7b, 0xffd166, 0x06d6a0, 0x118ab2, 0x8338ec, 0xff595e, 0x3a86ff];
             for (let side = -1; side <= 1; side += 2) {
                 const bHeight = 18 + Math.random() * 22;
@@ -403,7 +450,6 @@
                 building.position.set(side * 11.5, (bHeight / 2) - 2, zPos + 10);
                 tileGroup.add(building);
 
-                // Add store awnings / windows decor blocks
                 const decGeo = new THREE.BoxGeometry(12.2, 1.2, 3);
                 const decMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
                 const decor = new THREE.Mesh(decGeo, decMat);
@@ -422,12 +468,12 @@
 
         function spawnObstacle(zPos) {
             const lane = Math.floor(Math.random() * 3);
-            const isTall = Math.random() > 0.5; // Tall barricade vs Low Rollable barrier
+            const isTall = Math.random() > 0.5;
             
             const obsGroup = new THREE.Group();
 
             if (isTall) {
-                // TALL Construction Barricade (Too tall to jump, must switch lanes)
+                // TALL Construction Barricade
                 const barGeo = new THREE.BoxGeometry(2.4, 1.6, 0.4);
                 const barMat = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
                 const bar = new THREE.Mesh(barGeo, barMat);
@@ -444,27 +490,31 @@
                 obsGroup.add(s2);
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
-                obsGroup.userData = { type: 'tall' };
+                obsGroup.userData = { type: 'tall', depth: 0.4 };
             } else {
-                // LOW Barrier (Must slide under)
-                const lowGeo = new THREE.BoxGeometry(2.6, 0.6, 0.4);
+                // EXTENDED LONG SLIDE ROADBLOCK (Must perform a low slide roll under)
+                const longDepth = 8.0; // Extra long tunnel structure
+                const lowGeo = new THREE.BoxGeometry(2.6, 0.8, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
                 const lowBar = new THREE.Mesh(lowGeo, lowMat);
-                lowBar.position.y = 0.3;
+                lowBar.position.y = 1.6; // High overhead canopy requiring roll
                 obsGroup.add(lowBar);
 
-                // Overhead support posts
-                const poleGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.2);
+                // Structural Support Pillars
+                const poleGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.6);
                 const poleMat = new THREE.MeshLambertMaterial({ color: 0x333333 });
-                const p1 = new THREE.Mesh(poleGeo, poleMat);
-                p1.position.set(-1.2, 1.1, 0);
-                const p2 = new THREE.Mesh(poleGeo, poleMat);
-                p2.position.set(1.2, 1.1, 0);
-                obsGroup.add(p1);
-                obsGroup.add(p2);
+                
+                for (let pz of [-3.5, 3.5]) {
+                    const p1 = new THREE.Mesh(poleGeo, poleMat);
+                    p1.position.set(-1.2, 0.8, pz);
+                    const p2 = new THREE.Mesh(poleGeo, poleMat);
+                    p2.position.set(1.2, 0.8, pz);
+                    obsGroup.add(p1);
+                    obsGroup.add(p2);
+                }
 
                 obsGroup.position.set(laneX[lane], 0, zPos);
-                obsGroup.userData = { type: 'low' };
+                obsGroup.userData = { type: 'low', depth: longDepth };
             }
 
             scene.add(obsGroup);
@@ -486,11 +536,11 @@
 
         function triggerSlide() {
             isSliding = true;
-            playerGroup.scale.set(1, 0.45, 1);
+            playerGroup.scale.set(1, 0.35, 1); // Full low roll pose
             setTimeout(() => {
                 playerGroup.scale.set(1, 1, 1);
                 isSliding = false;
-            }, 650);
+            }, 850);
         }
 
         function startGame() {
@@ -510,7 +560,7 @@
             requestAnimationFrame(animate);
 
             if (gameState === 'MENU') {
-                playerGroup.rotation.y += 0.01; // Gentle lobby spin
+                playerGroup.rotation.y += 0.01;
             } else if (gameState === 'PLAYING') {
                 forwardSpeed = Math.min(forwardSpeed + 0.0001, maxSpeed);
                 distanceTraveled += forwardSpeed * 0.1;
@@ -518,7 +568,6 @@
                 document.getElementById('dist-val').innerText = distanceTraveled.toFixed(1);
                 document.getElementById('coin-val').innerText = coinsCollected;
 
-                // Ultra-responsive fast lane interpolation
                 const targetX = laneX[currentLane];
                 playerGroup.position.x += (targetX - playerGroup.position.x) * 0.4;
 
@@ -533,7 +582,6 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                // Running limb animation
                 runAnimTime += forwardSpeed * 1.1;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping) {
                     leftArm.rotation.x = Math.sin(runAnimTime) * 0.75;
@@ -542,7 +590,6 @@
                     rightLeg.rotation.x = Math.sin(runAnimTime) * 0.85;
                 }
 
-                // Smooth third-person camera follow
                 camera.position.z = playerGroup.position.z - 7.5;
                 camera.position.y = 4.2;
                 camera.position.x = playerGroup.position.x * 0.35;
@@ -562,7 +609,8 @@
                 });
 
                 obstacles.forEach(obs => {
-                    if (Math.abs(obs.position.z - playerGroup.position.z) < 1.0 &&
+                    const depth = obs.userData.depth || 0.4;
+                    if (Math.abs(obs.position.z - playerGroup.position.z) < (depth / 2 + 0.5) &&
                         Math.abs(obs.position.x - playerGroup.position.x) < 1.1) {
                         
                         if (obs.userData.type === 'tall') {
