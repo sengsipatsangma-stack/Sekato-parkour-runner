@@ -27,7 +27,6 @@
             left: 0;
             z-index: 1;
         }
-        /* UI Overlay */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -61,19 +60,6 @@
         .hud-card span {
             color: #ffaa00;
         }
-        #active-powerup {
-            align-self: center;
-            background: rgba(0, 255, 200, 0.8);
-            color: #000;
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 16px;
-            display: none;
-            box-shadow: 0 0 15px rgba(0, 255, 200, 0.8);
-        }
-
-        /* Screens Modal */
         .modal {
             position: absolute;
             top: 0;
@@ -81,7 +67,7 @@
             width: 100%;
             height: 100%;
             z-index: 20;
-            background: rgba(5, 5, 12, 0.9);
+            background: rgba(5, 5, 12, 0.92);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -115,7 +101,7 @@
             border: 2px solid #333;
             border-radius: 12px;
             padding: 15px;
-            width: 120px;
+            width: 130px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -126,7 +112,7 @@
             transform: scale(1.05);
         }
         .char-icon {
-            font-size: 36px;
+            font-size: 38px;
             margin-bottom: 5px;
         }
         .char-name {
@@ -144,10 +130,6 @@
             padding: 14px 40px;
             cursor: pointer;
             box-shadow: 0 5px 20px rgba(255, 69, 0, 0.5);
-            transition: transform 0.1s;
-        }
-        .btn:active {
-            transform: scale(0.95);
         }
         .btn-revive {
             background: linear-gradient(45deg, #00b0ff, #00e676);
@@ -161,7 +143,6 @@
             display: none;
         }
     </style>
-    <!-- Three.js for 3D Graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -173,21 +154,20 @@
             <div class="hud-card">🏃 <span id="dist-val">0.0</span> km</div>
             <div class="hud-card">🪙 <span id="coin-val">0</span></div>
         </div>
-        <div id="active-powerup">POWER-UP ACTIVE!</div>
     </div>
 
     <!-- MAIN MENU -->
     <div id="menu-screen" class="modal">
         <div class="modal-title">SEKATO RUNNER</div>
-        <div class="subtitle">3D City Parkour Adventure</div>
+        <div class="subtitle">3D City Rooftop Parkour</div>
         
         <div class="character-select">
             <div class="char-card selected" id="card-sekato" onclick="selectChar('Sekato')">
-                <div class="char-icon">🛹</div>
+                <div class="char-icon">🧑‍🎤</div>
                 <div class="char-name">SEKATO</div>
             </div>
             <div class="char-card" id="card-aika" onclick="selectChar('Aika')">
-                <div class="char-icon">⚡</div>
+                <div class="char-icon">👩‍🎤</div>
                 <div class="char-name">AIKA</div>
             </div>
         </div>
@@ -206,14 +186,12 @@
     </div>
 
     <script>
-        // --- GAME ENGINE STATE ---
         let scene, camera, renderer;
         let playerGroup, playerMesh;
         let selectedCharacter = 'Sekato';
         let isPlaying = false;
         let isDead = false;
 
-        // Player Motion
         let currentLane = 1; // 0: Left, 1: Center, 2: Right
         const laneX = [-3.2, 0, 3.2];
         let forwardSpeed = 0.35;
@@ -222,36 +200,26 @@
         let coinsCollected = 0;
         let reviveCost = 20;
 
-        // Jump & Slide
         let isJumping = false;
         let isSliding = false;
         let verticalVelocity = 0;
         const gravity = -0.018;
         const jumpPower = 0.42;
 
-        // Power-ups
-        let activePowerUp = null;
-        let powerUpTimer = 0;
-        let scoreMultiplier = 1;
-
-        // World Pools
         let trackTiles = [];
         let obstacles = [];
         let coins = [];
-        let powerupItems = [];
         let droneMesh;
 
-        // Touch System
         let touchStartX = 0;
         let touchStartY = 0;
 
-        // Initialize Three.js Engine
         function initEngine() {
             const container = document.getElementById('canvas-container');
             
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a14);
-            scene.fog = new THREE.FogExp2(0x0a0a14, 0.015);
+            scene.background = new THREE.Color(0x05050c);
+            scene.fog = new THREE.FogExp2(0x05050c, 0.012);
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
             camera.position.set(0, 4.5, -8);
@@ -262,32 +230,29 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
             scene.add(ambientLight);
 
-            const dirLight = new THREE.DirectionalLight(0xffaa00, 0.8);
+            const dirLight = new THREE.DirectionalLight(0xffaa55, 0.9);
             dirLight.position.set(20, 40, -20);
             scene.add(dirLight);
 
-            // Create Player Container
             playerGroup = new THREE.Group();
             scene.add(playerGroup);
             buildPlayerMesh();
 
-            // Create Flying Drone Enemy
+            // Flying Drone Enemy
             const droneGeo = new THREE.ConeGeometry(0.8, 1.2, 4);
-            const droneMat = new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true });
+            const droneMat = new THREE.MeshLambertMaterial({ color: 0xff0055 });
             droneMesh = new THREE.Mesh(droneGeo, droneMat);
             droneMesh.rotation.x = Math.PI;
             scene.add(droneMesh);
 
-            // Initial World Setup
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < 14; i++) {
                 spawnTrackTile(i * 20);
             }
 
-            // Bind Touch & Key Controls
+            // Controls Setup (Fixed Swipe Directions)
             window.addEventListener('resize', onWindowResize);
             window.addEventListener('touchstart', e => {
                 touchStartX = e.touches[0].clientX;
@@ -297,13 +262,14 @@
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 30 && currentLane < 2) currentLane++;
-                    else if (dx < -30 && currentLane > 0) currentLane--;
+                    if (dx < -30 && currentLane < 2) currentLane++;      // Swipe Left -> Move Right lane
+                    else if (dx > 30 && currentLane > 0) currentLane--;  // Swipe Right -> Move Left lane
                 } else {
                     if (dy < -30 && !isJumping) { isJumping = true; verticalVelocity = jumpPower; }
                     else if (dy > 30 && !isSliding) { triggerSlide(); }
                 }
             });
+
             window.addEventListener('keydown', e => {
                 if (!isPlaying || isDead) return;
                 if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
@@ -318,12 +284,12 @@
         function buildPlayerMesh() {
             if (playerMesh) playerGroup.remove(playerMesh);
             
-            const bodyGeo = new THREE.BoxGeometry(1, 1.8, 0.8);
             const isSekato = selectedCharacter === 'Sekato';
-            const bodyMat = new THREE.MeshBasicMaterial({ color: isSekato ? 0xff4500 : 0x00e676 });
+            const bodyGeo = new THREE.BoxGeometry(0.9, 1.7, 0.7);
+            const bodyMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xff4500 : 0x00e676 });
             
             playerMesh = new THREE.Mesh(bodyGeo, bodyMat);
-            playerMesh.position.y = 0.9;
+            playerMesh.position.y = 0.85;
             playerGroup.add(playerMesh);
         }
 
@@ -339,25 +305,24 @@
             
             // Rooftop Platform
             const geo = new THREE.BoxGeometry(11, 2, 20);
-            const mat = new THREE.MeshBasicMaterial({ color: 0x181824 });
+            const mat = new THREE.MeshLambertMaterial({ color: 0x181824 });
             const tile = new THREE.Mesh(geo, mat);
             tile.position.set(0, -1, zPos + 10);
             tileGroup.add(tile);
 
-            // Lane Markings
-            for (let l = -1; l <= 1; l++) {
-                const lineGeo = new THREE.PlaneGeometry(0.1, 20);
-                const lineMat = new THREE.MeshBasicMaterial({ color: 0x333344 });
-                const line = new THREE.Mesh(lineGeo, lineMat);
-                line.rotation.x = -Math.PI / 2;
-                line.position.set(l * 3.2, 0.01, zPos + 10);
-                tileGroup.add(line);
+            // Side City Buildings Background
+            for (let side = -1; side <= 1; side += 2) {
+                const bHeight = 15 + Math.random() * 25;
+                const bGeo = new THREE.BoxGeometry(10, bHeight, 20);
+                const bMat = new THREE.MeshLambertMaterial({ color: 0x0d0d1a });
+                const building = new THREE.Mesh(bGeo, bMat);
+                building.position.set(side * 11, (bHeight / 2) - 2, zPos + 10);
+                tileGroup.add(building);
             }
 
             scene.add(tileGroup);
             trackTiles.push({ group: tileGroup, z: zPos });
 
-            // Spawn Obstacles & Coins
             if (zPos > 30) {
                 if (Math.random() > 0.3) spawnObstacle(zPos + 10);
                 if (Math.random() > 0.4) spawnCoins(zPos + 10);
@@ -366,14 +331,14 @@
 
         function spawnObstacle(zPos) {
             const lane = Math.floor(Math.random() * 3);
-            const isTall = Math.random() > 0.5; // Tall = Jump over, Low = Slide under
+            const isTall = Math.random() > 0.5;
             
-            const geo = isTall ? new THREE.BoxGeometry(2.2, 1.8, 1.5) : new THREE.BoxGeometry(2.8, 0.8, 0.5);
-            const mat = new THREE.MeshBasicMaterial({ color: isTall ? 0xff0055 : 0x00b0ff });
+            const geo = isTall ? new THREE.BoxGeometry(2.2, 1.8, 1.2) : new THREE.BoxGeometry(2.8, 0.8, 0.5);
+            const mat = new THREE.MeshLambertMaterial({ color: isTall ? 0xff0055 : 0x00b0ff });
             const obs = new THREE.Mesh(geo, mat);
             
             obs.position.set(laneX[lane], isTall ? 0.9 : 2.2, zPos);
-            obs.userData = { type: isTall ? 'tall' : 'low', lane: lane };
+            obs.userData = { type: isTall ? 'tall' : 'low' };
             scene.add(obs);
             obstacles.push(obs);
         }
@@ -382,7 +347,7 @@
             const lane = Math.floor(Math.random() * 3);
             for (let i = 0; i < 4; i++) {
                 const geo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 8);
-                const mat = new THREE.MeshBasicMaterial({ color: 0xffcc00 });
+                const mat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const coin = new THREE.Mesh(geo, mat);
                 coin.rotation.x = Math.PI / 2;
                 coin.position.set(laneX[lane], 1, zPos + (i * 2.2));
@@ -394,10 +359,10 @@
         function triggerSlide() {
             isSliding = true;
             playerMesh.scale.set(1, 0.4, 1);
-            playerMesh.position.y = 0.4;
+            playerMesh.position.y = 0.35;
             setTimeout(() => {
                 playerMesh.scale.set(1, 1, 1);
-                playerMesh.position.y = 0.9;
+                playerMesh.position.y = 0.85;
                 isSliding = false;
             }, 750);
         }
@@ -418,18 +383,15 @@
             requestAnimationFrame(animate);
 
             if (isPlaying && !isDead) {
-                // Progressive Speed & Distance
                 forwardSpeed = Math.min(forwardSpeed + 0.0001, maxSpeed);
-                distanceTraveled += forwardSpeed * 0.1 * scoreMultiplier;
+                distanceTraveled += forwardSpeed * 0.1;
 
                 document.getElementById('dist-val').innerText = distanceTraveled.toFixed(1);
                 document.getElementById('coin-val').innerText = coinsCollected;
 
-                // Lane Interpolation
                 const targetX = laneX[currentLane];
                 playerGroup.position.x += (targetX - playerGroup.position.x) * 0.25;
 
-                // Jump Physics
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
                     verticalVelocity += gravity;
@@ -439,24 +401,19 @@
                     }
                 }
 
-                // Move Player Forward
                 playerGroup.position.z += forwardSpeed;
 
-                // Follow Camera
                 camera.position.z = playerGroup.position.z - 8;
                 camera.position.x = playerGroup.position.x * 0.3;
                 camera.lookAt(playerGroup.position.x * 0.2, 1.5, playerGroup.position.z + 8);
 
-                // Flying Drone Target
                 droneMesh.position.set(playerGroup.position.x, 2.5, playerGroup.position.z - 4);
 
-                // Tile Generation Cycle
                 const lastTileZ = trackTiles[trackTiles.length - 1].z;
                 if (playerGroup.position.z > lastTileZ - 180) {
                     spawnTrackTile(lastTileZ + 20);
                 }
 
-                // Coin Magnet Logic
                 coins.forEach(coin => {
                     if (coin.position.distanceTo(playerGroup.position) < 2.2) {
                         scene.remove(coin);
@@ -464,7 +421,6 @@
                     }
                 });
 
-                // Collision Detection
                 obstacles.forEach(obs => {
                     if (Math.abs(obs.position.z - playerGroup.position.z) < 1.0 &&
                         Math.abs(obs.position.x - playerGroup.position.x) < 1.2) {
@@ -500,7 +456,7 @@
                 reviveCost *= 2;
                 isDead = false;
                 isPlaying = true;
-                playerGroup.position.z += 5; // Move forward safely
+                playerGroup.position.z += 5;
                 document.getElementById('gameover-screen').style.display = 'none';
             } else {
                 alert("Not enough coins!");
