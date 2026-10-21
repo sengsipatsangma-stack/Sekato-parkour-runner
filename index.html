@@ -633,18 +633,18 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // TOUCH CONTROLS (DIRECT PERSPECTIVE: SWIPE LEFT MOVES LEFT, SWIPE RIGHT MOVES RIGHT)
+            // FORCED REVERSED SWIPE CONTROLS (SWIPE LEFT -> INCREASES LANE TO FORCE RIGHT/LEFT CORRECTION)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    // SWIPE LEFT -> Moves character to LEFT lane
+                    // SWIPE LEFT -> INCREASES LANE
                     if (dx < -20 && currentLane < 2) {
                         currentLane++;
                     }
-                    // SWIPE RIGHT -> Moves character to RIGHT lane
+                    // SWIPE RIGHT -> DECREASES LANE
                     else if (dx > 20 && currentLane > 0) {
                         currentLane--;
                     }
