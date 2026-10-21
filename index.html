@@ -46,16 +46,16 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            gap: 10px;
+            gap: 8px;
         }
         .hud-card {
             background: rgba(255, 255, 255, 0.92);
             border: 2px solid #ff4500;
             border-radius: 14px;
-            padding: 6px 14px;
+            padding: 6px 12px;
             color: #222;
             font-weight: 800;
-            font-size: 16px;
+            font-size: 15px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
             backdrop-filter: blur(6px);
             display: flex;
@@ -64,6 +64,20 @@
         }
         .hud-card span {
             color: #ff4500;
+        }
+        .sound-btn {
+            pointer-events: auto;
+            cursor: pointer;
+            font-size: 18px;
+            background: #111;
+            color: #fff;
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         #menu-screen {
@@ -119,30 +133,26 @@
             display: flex;
             gap: 12px;
             width: 100%;
+            justify-content: center;
         }
         .char-card {
             background: rgba(30, 40, 60, 0.85);
-            border: 3px solid #555;
+            border: 3px solid #00ffcc;
             border-radius: 14px;
-            padding: 8px;
-            flex: 1;
+            padding: 10px;
+            width: 100%;
             text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .char-card.selected {
-            border-color: #00ffcc;
             box-shadow: 0 0 18px rgba(0, 255, 200, 0.6);
-            transform: scale(1.04);
             background: rgba(40, 65, 95, 0.9);
         }
         .char-icon {
-            font-size: 26px;
+            font-size: 32px;
         }
         .char-name {
             color: #fff;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 16px;
+            margin-top: 4px;
         }
         
         .btn {
@@ -248,23 +258,24 @@
             <div class="hud-card">🏃 <span id="dist-val">0.0</span> km</div>
             <div class="hud-card">🪙 <span id="coin-val">0</span></div>
             <div class="hud-card"><span id="gender-tag">👨</span> <span id="player-tag">Sekato</span></div>
+            <div class="sound-btn" onclick="toggleAudio()">🔊</div>
         </div>
     </div>
 
     <!-- PROFILE CREATION MODAL -->
     <div id="profile-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 28px;">CREATE PROFILE</div>
-        <div class="subtitle" style="margin-bottom: 20px;">Set your details to enter the high score leaderboard</div>
+        <div class="subtitle" style="margin-bottom: 20px;">Set your details to play as your character</div>
         
         <div class="input-group">
             <label>Player Name</label>
             <input type="text" id="input-name" placeholder="Enter your name" maxlength="12">
         </div>
         <div class="input-group">
-            <label>Gender</label>
-            <select id="input-gender">
-                <option value="Male">Male ♂</option>
-                <option value="Female">Female ♀</option>
+            <label>Gender (Determines Character)</label>
+            <select id="input-gender" onchange="previewGenderSelection(this.value)">
+                <option value="Male">Male ♂ (Play as Sekato)</option>
+                <option value="Female">Female ♀ (Play as Aika)</option>
             </select>
         </div>
 
@@ -289,13 +300,9 @@
 
         <div class="lobby-bottom-panel">
             <div class="character-select">
-                <div class="char-card selected" id="card-sekato" onclick="selectChar('Sekato')">
-                    <div class="char-icon">👦</div>
-                    <div class="char-name">SEKATO (♂)</div>
-                </div>
-                <div class="char-card" id="card-aika" onclick="selectChar('Aika')">
-                    <div class="char-icon">👧</div>
-                    <div class="char-name">AIKA (♀)</div>
+                <div class="char-card" id="char-display-card">
+                    <div class="char-icon" id="char-icon-display">👦</div>
+                    <div class="char-name" id="char-name-display">SEKATO (♂)</div>
                 </div>
             </div>
 
@@ -347,11 +354,25 @@
         let touchStartX = 0;
         let touchStartY = 0;
 
+        let audioCtx = null;
+        let audioMuted = false;
+        let bgMusicTimer = null;
+
         let playerData = {
             name: "Sekato",
             gender: "Male",
             scores: []
         };
+
+        function previewGenderSelection(genderVal) {
+            if (genderVal === 'Female') {
+                selectedCharacter = 'Aika';
+            } else {
+                selectedCharacter = 'Sekato';
+            }
+            updateCharacterLobbyCard();
+            if (characterMeshGroup) buildHumanoidCharacter();
+        }
 
         function loadStorageData() {
             const saved = localStorage.getItem('SekatoRunner_Profile');
@@ -362,7 +383,30 @@
             } else {
                 document.getElementById('profile-modal').style.display = 'flex';
             }
+            applyGenderToCharacter();
             updateHUDLabels();
+        }
+
+        function applyGenderToCharacter() {
+            if (playerData.gender === 'Female') {
+                selectedCharacter = 'Aika';
+            } else {
+                selectedCharacter = 'Sekato';
+            }
+            updateCharacterLobbyCard();
+            if (characterMeshGroup) buildHumanoidCharacter();
+        }
+
+        function updateCharacterLobbyCard() {
+            const iconEl = document.getElementById('char-icon-display');
+            const nameEl = document.getElementById('char-name-display');
+            if (selectedCharacter === 'Aika') {
+                iconEl.innerText = '👧';
+                nameEl.innerText = 'AIKA (♀)';
+            } else {
+                iconEl.innerText = '👦';
+                nameEl.innerText = 'SEKATO (♂)';
+            }
         }
 
         function saveProfile() {
@@ -376,6 +420,7 @@
             playerData.gender = genderVal;
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
             document.getElementById('profile-modal').style.display = 'none';
+            applyGenderToCharacter();
             updateHUDLabels();
         }
 
@@ -421,14 +466,58 @@
             document.getElementById('leaderboard-modal').style.display = 'none';
         }
 
-        let audioCtx;
         function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleAudio() {
+            audioMuted = !audioMuted;
+            const btn = document.querySelector('.sound-btn');
+            if (btn) btn.innerText = audioMuted ? '🔇' : '🔊';
+            if (audioMuted && bgMusicTimer) {
+                clearInterval(bgMusicTimer);
+                bgMusicTimer = null;
+            } else if (!audioMuted && gameState === 'PLAYING') {
+                startBackgroundMusic();
+            }
+        }
+
+        function startBackgroundMusic() {
+            if (bgMusicTimer || audioMuted) return;
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+            let noteIdx = 0;
+            bgMusicTimer = setInterval(() => {
+                if (gameState !== 'PLAYING' || audioMuted || !audioCtx) return;
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(notes[noteIdx], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.18);
+                    noteIdx = (noteIdx + 1) % notes.length;
+                } catch(e) {}
+            }, 200);
+        }
+
+        function stopBackgroundMusic() {
+            if (bgMusicTimer) {
+                clearInterval(bgMusicTimer);
+                bgMusicTimer = null;
+            }
         }
 
         function playSound(type) {
-            if (!audioCtx) return;
+            if (!audioCtx || audioMuted) return;
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -494,14 +583,13 @@
             
             characterMeshGroup = new THREE.Group();
             playerGroup.add(characterMeshGroup);
-            buildHumanoidCharacter();
 
             for (let i = 0; i < 20; i++) {
                 spawnTrackTile(i * 20);
             }
 
-            setupCameraForLobby();
             loadStorageData();
+            setupCameraForLobby();
 
             window.addEventListener('resize', onWindowResize);
             
@@ -520,11 +608,11 @@
                     if (dx > 20 && currentLane > 0) currentLane--;      
                     else if (dx < -20 && currentLane < 2) currentLane++;  
                 } else {
-                    if (dy < -20) { // Swipe Up -> Jump
+                    if (dy < -20) {
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
-                    } else if (dy > 20) { // Swipe Down -> Instant Roll
+                    } else if (dy > 20) {
                         triggerSlide(); 
                     }
                 }
@@ -647,13 +735,6 @@
             characterMeshGroup.add(charRoot);
         }
 
-        function selectChar(name) {
-            selectedCharacter = name;
-            document.getElementById('card-sekato').classList.toggle('selected', name === 'Sekato');
-            document.getElementById('card-aika').classList.toggle('selected', name === 'Aika');
-            buildHumanoidCharacter();
-        }
-
         function setupCameraForLobby() {
             camera.position.set(0, 1.8, -6.0);
             camera.rotation.set(0, 0, 0);
@@ -716,7 +797,6 @@
             const obsGroup = new THREE.Group();
 
             if (randType < 0.25) {
-                // Hurdle (Jump over)
                 const hurdleGeo = new THREE.BoxGeometry(2.4, 0.4, 0.4);
                 const hurdleMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
                 const hurdle = new THREE.Mesh(hurdleGeo, hurdleMat);
@@ -726,7 +806,6 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                // Low Barrier (Roll under)
                 const longDepth = 7.0;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, longDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
@@ -737,7 +816,6 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'roll_only', depth: longDepth };
             } else if (randType < 0.8) {
-                // CAR OBSTACLE (Requires either jumping over or rolling depending on design)
                 const carBodyMat = new THREE.MeshLambertMaterial({ color: 0x2255ff });
                 const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 4.5), carBodyMat);
                 carBody.position.y = 0.7;
@@ -760,7 +838,6 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'car', depth: 4.5 };
             } else {
-                // Table
                 const tableDepth = 3.2;
                 const topGeo = new THREE.BoxGeometry(2.8, 0.25, tableDepth);
                 const topMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
@@ -796,7 +873,7 @@
         }
 
         function triggerSlide() {
-            isJumping = false; // Instantly cancel jump if sliding mid-air
+            isJumping = false;
             verticalVelocity = 0;
             isSliding = true;
             rollAngle = 0;
@@ -811,6 +888,7 @@
 
         function startGame() {
             initAudio();
+            startBackgroundMusic();
             document.getElementById('menu-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'flex';
             gameState = 'PLAYING';
@@ -915,7 +993,6 @@
                         } else if (obs.userData.type === 'roll_only') {
                             if (!isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'car') {
-                            // Cars can be jumped over if jumping high enough, or rolled under if sliding
                             if (playerGroup.position.y < 1.4 && !isSliding) triggerGameOver();
                         } else if (obs.userData.type === 'table') {
                             const isHighEnough = playerGroup.position.y > 1.0;
@@ -936,6 +1013,7 @@
 
         function triggerGameOver() {
             gameState = 'GAMEOVER';
+            stopBackgroundMusic();
             playSound('crash');
 
             const playerScores = playerData.scores.filter(e => e.name.toLowerCase() === playerData.name.toLowerCase());
@@ -967,6 +1045,7 @@
                 coinsCollected -= reviveCost;
                 reviveCost *= 2;
                 gameState = 'PLAYING';
+                startBackgroundMusic();
                 playerGroup.position.z += 6;
                 document.getElementById('gameover-screen').style.display = 'none';
             } else {
@@ -975,6 +1054,7 @@
         }
 
         function restartToMenu() {
+            stopBackgroundMusic();
             document.getElementById('gameover-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
