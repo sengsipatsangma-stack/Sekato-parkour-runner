@@ -331,7 +331,11 @@
         let selectedCharacter = 'Sekato';
         let gameState = 'MENU';
 
-        let currentLane = 1; // 0 = Left Lane (-3.2), 1 = Center Lane (0), 2 = Right Lane (+3.2)
+        let currentLane = 1; 
+        // LANE X COORDINATES: 
+        // Index 0 = Left Lane (negative X = -3.2)
+        // Index 1 = Center Lane (0)
+        // Index 2 = Right Lane (positive X = +3.2)
         const laneX = [-3.2, 0, 3.2]; 
         let forwardSpeed = 0.48;
         const maxSpeed = 1.05;
@@ -633,9 +637,9 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED DIRECT CONTROLS: 
-            // Swipe Left (dx < -8) decreases lane index -> moves to Left lane (-3.2)
-            // Swipe Right (dx > 8) increases lane index -> moves to Right lane (+3.2)
+            // FIXED DIRECT CONTROLS:
+            // Swipe Left (dx < -8) -> moves character left (currentLane decreases to 0)
+            // Swipe Right (dx > 8) -> moves character right (currentLane increases to 2)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
@@ -643,9 +647,9 @@
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
                     if (dx < -8 && currentLane > 0) {
-                        currentLane--; // Move Left
+                        currentLane--; // Move Left (-3.2)
                     } else if (dx > 8 && currentLane < 2) {
-                        currentLane++; // Move Right
+                        currentLane++; // Move Right (+3.2)
                     }
                 } else {
                     if (dy < -8 && !isJumping && !isSliding) {
@@ -846,7 +850,7 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                // THINNED OUT SLIDE OBSTACLE (0.4 THIN DEPTH FOR EASY CLEARING)
+                // THINNED OUT SLIDE OBSTACLE (0.4 ULTRA-THIN DEPTH FOR EASY CLEARING)
                 const thinSlideDepth = 0.4;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, thinSlideDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
