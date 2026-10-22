@@ -507,7 +507,6 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             
-            // Unique player aggregation: Keep only the highest score for each unique player name
             const bestScoresMap = {};
             playerData.scores.forEach(entry => {
                 const key = entry.name.toLowerCase();
@@ -595,7 +594,6 @@
             }
         }
 
-        // Automatically stop music and sound when leaving the game tab or window
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 stopBackgroundMusic();
