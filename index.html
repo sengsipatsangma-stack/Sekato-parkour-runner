@@ -19,6 +19,7 @@
             overflow: hidden;
             background-color: #3a88e9;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #fff;
         }
         #canvas-container {
             width: 100%;
@@ -251,29 +252,52 @@
             outline: none;
         }
 
+        /* Tiered League Leaderboard Styles */
         .leaderboard-box {
             width: 100%;
-            max-width: 320px;
-            max-height: 240px;
+            max-width: 340px;
+            max-height: 55vh;
             overflow-y: auto;
             background: #162232;
             border: 2px solid #334860;
-            border-radius: 12px;
-            padding: 10px;
+            border-radius: 14px;
+            padding: 12px;
             margin: 10px 0;
+            text-align: left;
         }
-        .leader-item {
+        .league-section {
+            margin-bottom: 12px;
+        }
+        .league-header {
+            font-weight: 900;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .league-champion { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; }
+        .league-gold { background: linear-gradient(135deg, #f1c40f, #d4ac0d); color: #000; }
+        .league-silver { background: linear-gradient(135deg, #bdc3c7, #7f8c8d); color: #000; }
+        .league-bronze { background: linear-gradient(135deg, #d35400, #ba4a00); color: #fff; }
+
+        .leaderboard-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 10px;
-            border-bottom: 1px solid #25364a;
-            color: #fff;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
             font-size: 13px;
             font-weight: 700;
         }
-        .rank-1 { color: #ffd700 !important; font-weight: 900; }
-        .rank-2 { color: #c0c0c0 !important; font-weight: 900; }
-        .rank-3 { color: #cd7f32 !important; font-weight: 900; }
+        .leaderboard-row.is-me {
+            border: 2px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.2);
+        }
+        .player-rank { font-weight: 900; margin-right: 6px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Firebase App & Firestore SDKs -->
@@ -332,9 +356,9 @@
         <button class="btn" onclick="saveProfile()" style="margin-top: 10px;">SAVE PROFILE</button>
     </div>
 
-    <!-- HIGH SCORE LIST MODAL -->
+    <!-- TIERED LEAGUE RANKINGS MODAL -->
     <div id="leaderboard-modal" class="modal" style="display: none;">
-        <div class="modal-title" style="font-size: 26px; color: #ffd700;">🏆 GLOBAL SCORES</div>
+        <div class="modal-title" style="font-size: 26px; color: #ffd700;">🏆 LEAGUE RANKINGS</div>
         
         <div class="leaderboard-box" id="leaderboard-list">Loading cloud scores...</div>
 
@@ -358,7 +382,7 @@
             <button class="btn" onclick="startGame()">START RUN</button>
             <div style="display: flex; gap: 6px; width: 100%;">
                 <button class="btn btn-secondary" onclick="openControlsModal()">⚙️ SETTINGS</button>
-                <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 SCORES</button>
+                <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 LEAGUES</button>
                 <button class="btn btn-secondary" onclick="editProfile()">👤 PROFILE</button>
             </div>
         </div>
@@ -375,7 +399,7 @@
     </div>
 
     <script>
-        // FIREBASE CLOUD CONFIGURATION (Linked to your sekato-runner project)
+        // FIREBASE CLOUD CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyCMzkmGlDUTGD-GSqz0...", 
             authDomain: "sekato-runner.firebaseapp.com",
@@ -546,46 +570,70 @@
             }
         }
 
+        // TIERED LEAGUE RANKINGS SYSTEM
         async function openLeaderboard() {
             document.getElementById('leaderboard-modal').style.display = 'flex';
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">Loading global scores...</div>';
+            const container = document.getElementById('leaderboard-list');
+            container.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">Loading league rankings...</div>';
 
-            let uniqueScores = [];
+            let players = [];
 
             if (db) {
                 try {
-                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(20).get();
+                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(30).get();
                     snapshot.forEach(doc => {
-                        uniqueScores.push(doc.data());
+                        players.push(doc.data());
                     });
                 } catch (e) {
                     console.warn("Firestore fetch error, falling back to local storage");
                 }
             }
 
-            if (uniqueScores.length === 0 && playerData.name) {
-                uniqueScores.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
+            if (players.length === 0 && playerData.name) {
+                players.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
             }
 
-            list.innerHTML = '';
-            if (uniqueScores.length === 0) {
-                list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
-            } else {
-                uniqueScores.sort((a, b) => b.km - a.km).forEach((item, index) => {
+            container.innerHTML = '';
+            if (players.length === 0) {
+                container.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
+                return;
+            }
+
+            // Define Tier Brackets based on global rankings
+            const tiers = [
+                { name: '🏆 Champion', className: 'league-champion', start: 0, end: 0 },
+                { name: '🥇 Gold League', className: 'league-gold', start: 1, end: 2 },
+                { name: '🥈 Silver League', className: 'league-silver', start: 3, end: 5 },
+                { name: '🥉 Bronze League', className: 'league-bronze', start: 6, end: players.length - 1 }
+            ];
+
+            tiers.forEach(tier => {
+                const tierPlayers = players.slice(tier.start, tier.end + 1);
+                if (tierPlayers.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'league-section';
+
+                const header = document.createElement('div');
+                header.className = `league-header ${tier.className}`;
+                header.innerText = tier.name;
+                section.appendChild(header);
+
+                tierPlayers.forEach((player, idx) => {
+                    const actualRank = tier.start + idx + 1;
+                    const isMe = player.name.toLowerCase() === (playerData.name || "").toLowerCase();
+
                     const row = document.createElement('div');
-                    row.className = 'leader-item';
-                    
-                    let rankIcon = `#${index+1}`;
-                    let rankClass = '';
-                    if (index === 0) { rankIcon = '🥇 #1'; rankClass = 'rank-1'; }
-                    else if (index === 1) { rankIcon = '🥈 #2'; rankClass = 'rank-2'; }
-                    else if (index === 2) { rankIcon = '🥉 #3'; rankClass = 'rank-3'; }
-
-                    row.innerHTML = `<span class="${rankClass}">${rankIcon} ${item.name} (${item.gender === 'Male' ? '♂' : '♀'})</span><span class="${rankClass}">${Math.floor(item.km)} m</span>`;
-                    list.appendChild(row);
+                    row.className = `leaderboard-row ${isMe ? 'is-me' : ''}`;
+                    row.innerHTML = `
+                        <span><span class="player-rank">#${actualRank}</span> ${player.name} (${player.gender === 'Male' ? '♂' : '♀'}) ${isMe ? '(Me)' : ''}</span>
+                        <span>⭐ ${Math.floor(player.km)} m</span>
+                    `;
+                    section.appendChild(row);
                 });
-            }
+
+                container.appendChild(section);
+            });
         }
 
         function closeLeaderboard() {
