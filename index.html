@@ -136,7 +136,6 @@
             justify-content: center;
         }
         .char-card {
-            background: rgba(30, 40, 60, 0.85);
             border: 3px solid #00ffcc;
             border-radius: 14px;
             padding: 10px;
@@ -332,10 +331,7 @@
         let gameState = 'MENU';
 
         let currentLane = 1; 
-        // LANE X COORDINATES: 
-        // Index 0 = Left Lane (negative X = -3.2)
-        // Index 1 = Center Lane (0)
-        // Index 2 = Right Lane (positive X = +3.2)
+        // LANE X POSITIONS: Left Lane = -3.2, Center Lane = 0, Right Lane = +3.2
         const laneX = [-3.2, 0, 3.2]; 
         let forwardSpeed = 0.48;
         const maxSpeed = 1.05;
@@ -637,19 +633,19 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED DIRECT CONTROLS:
-            // Swipe Left (dx < -8) -> moves character left (currentLane decreases to 0)
-            // Swipe Right (dx > 8) -> moves character right (currentLane increases to 2)
+            // NORMAL DIRECT TOUCH SWIPE MAPPING:
+            // Swiping RIGHT (dx > 8) shifts character to the Right lane (currentLane++)
+            // Swiping LEFT (dx < -8) shifts character to the Left lane (currentLane--)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx < -8 && currentLane > 0) {
-                        currentLane--; // Move Left (-3.2)
-                    } else if (dx > 8 && currentLane < 2) {
-                        currentLane++; // Move Right (+3.2)
+                    if (dx > 8 && currentLane < 2) {
+                        currentLane++; // Swipe Right -> move right (+3.2)
+                    } else if (dx < -8 && currentLane > 0) {
+                        currentLane--; // Swipe Left -> move left (-3.2)
                     }
                 } else {
                     if (dy < -8 && !isJumping && !isSliding) {
@@ -850,7 +846,6 @@
                 obsGroup.position.set(laneX[lane], 0, zPos);
                 obsGroup.userData = { type: 'jump_only', depth: 0.4 };
             } else if (randType < 0.5) {
-                // THINNED OUT SLIDE OBSTACLE (0.4 ULTRA-THIN DEPTH FOR EASY CLEARING)
                 const thinSlideDepth = 0.4;
                 const lowGeo = new THREE.BoxGeometry(2.6, 1.2, thinSlideDepth);
                 const lowMat = new THREE.MeshLambertMaterial({ color: 0xff3344 });
@@ -998,7 +993,6 @@
                     characterMeshGroup.rotation.z = 0;
                 }
 
-                // SMOOTH, NON-SHAKY CAMERA TRACKING
                 camera.position.z = playerGroup.position.z - 9.5;
                 camera.position.y = 4.2;
                 
@@ -1128,3 +1122,4 @@
     </script>
 </body>
 </html>
+
