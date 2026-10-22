@@ -276,6 +276,9 @@
         .rank-3 { color: #cd7f32 !important; font-weight: 900; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Firebase App & Firestore SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -331,9 +334,9 @@
 
     <!-- HIGH SCORE LIST MODAL -->
     <div id="leaderboard-modal" class="modal" style="display: none;">
-        <div class="modal-title" style="font-size: 26px; color: #ffd700;">🏆 HIGH SCORES</div>
+        <div class="modal-title" style="font-size: 26px; color: #ffd700;">🏆 GLOBAL SCORES</div>
         
-        <div class="leaderboard-box" id="leaderboard-list"></div>
+        <div class="leaderboard-box" id="leaderboard-list">Loading cloud scores...</div>
 
         <button class="btn" onclick="closeLeaderboard()" style="margin-top: 10px;">BACK TO LOBBY</button>
     </div>
@@ -372,6 +375,24 @@
     </div>
 
     <script>
+        // FIREBASE CLOUD CONFIGURATION (Replace with your own project config for global friend sharing)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForDemoPurposesOnly",
+            authDomain: "sekato-runner.firebaseapp.com",
+            projectId: "sekato-runner",
+            storageBucket: "sekato-runner.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123:web:abc"
+        };
+        
+        let db = null;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        } catch(e) {
+            console.warn("Firebase initialized in offline fallback mode.");
+        }
+
         let scene, camera, renderer;
         let playerGroup, characterMeshGroup;
         let leftArm, rightArm, leftLeg, rightLeg;
@@ -411,7 +432,7 @@
             name: "",
             gender: "Male",
             invertedControls: true,
-            scores: []
+            bestScore: 0
         };
 
         function openControlsModal() {
@@ -495,6 +516,7 @@
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
             document.getElementById('profile-modal').style.display = 'none';
             applyGenderToCharacter();
+            syncScoreToCloud();
         }
 
         function editProfile() {
@@ -503,24 +525,55 @@
             document.getElementById('profile-modal').style.display = 'flex';
         }
 
-        function openLeaderboard() {
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '';
-            
-            const bestScoresMap = {};
-            playerData.scores.forEach(entry => {
-                const key = entry.name.toLowerCase();
-                if (!bestScoresMap[key] || entry.km > bestScoresMap[key].km) {
-                    bestScoresMap[key] = entry;
+        async function syncScoreToCloud() {
+            if (!db || !playerData.name) return;
+            try {
+                // Upsert unique player document in Firestore so each player appears only once with their best score
+                const playerRef = db.collection('leaderboard').doc(playerData.name.toLowerCase());
+                const doc = await playerRef.get();
+                const existingBest = doc.exists ? doc.data().km : 0;
+                
+                if (playerData.bestScore > existingBest) {
+                    await playerRef.set({
+                        name: playerData.name,
+                        gender: playerData.gender,
+                        km: playerData.bestScore,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                 }
-            });
+            } catch (e) {
+                console.warn("Cloud sync skipped:", e);
+            }
+        }
 
-            const uniqueScores = Object.values(bestScoresMap).sort((a, b) => b.km - a.km);
+        async function openLeaderboard() {
+            document.getElementById('leaderboard-modal').style.display = 'flex';
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">Loading global scores...</div>';
 
+            let uniqueScores = [];
+
+            if (db) {
+                try {
+                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(20).get();
+                    snapshot.forEach(doc => {
+                        uniqueScores.push(doc.data());
+                    });
+                } catch (e) {
+                    console.warn("Firestore fetch error, falling back to local storage");
+                }
+            }
+
+            // Fallback to local storage if offline or cloud unavailable
+            if (uniqueScores.length === 0 && playerData.name) {
+                uniqueScores.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
+            }
+
+            list.innerHTML = '';
             if (uniqueScores.length === 0) {
                 list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
             } else {
-                uniqueScores.slice(0, 15).forEach((item, index) => {
+                uniqueScores.sort((a, b) => b.km - a.km).forEach((item, index) => {
                     const row = document.createElement('div');
                     row.className = 'leader-item';
                     
@@ -534,7 +587,6 @@
                     list.appendChild(row);
                 });
             }
-            document.getElementById('leaderboard-modal').style.display = 'flex';
         }
 
         function closeLeaderboard() {
@@ -1050,16 +1102,13 @@
             stopBackgroundMusic();
             playSound('crash');
 
-            const playerScores = playerData.scores.filter(e => e.name.toLowerCase() === playerData.name.toLowerCase());
-            const previousBest = playerScores.length > 0 ? Math.max(...playerScores.map(e => e.km)) : 0;
-            const isNewHighScore = distanceTraveled > previousBest;
+            const isNewHighScore = distanceTraveled > (playerData.bestScore || 0);
+            if (isNewHighScore) {
+                playerData.bestScore = distanceTraveled;
+            }
 
-            playerData.scores.push({
-                name: playerData.name,
-                gender: playerData.gender,
-                km: distanceTraveled
-            });
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
+            syncScoreToCloud();
 
             document.getElementById('final-stats').innerText = `Distance: ${Math.floor(distanceTraveled)} m | Coins: ${coinsCollected}`;
             document.getElementById('high-score-badge').style.display = isNewHighScore ? 'block' : 'none';
