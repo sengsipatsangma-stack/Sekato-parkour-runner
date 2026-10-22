@@ -295,7 +295,7 @@
     <!-- CONTROL SETTINGS MODAL -->
     <div id="controls-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 24px; color: #00ffcc;">⚙️ SETTINGS</div>
-        <div style="margin-bottom: 20px; color:#aaa; font-size:12px; text-align: center;">Steering Preferences</div>
+        <div style="margin-bottom: 20px; color:#aaa; font-size:12px; text-align: center;">Steering & Audio Preferences</div>
 
         <div class="setting-row">
             <span class="setting-label">Inverted Steering</span>
@@ -386,7 +386,7 @@
         let coinsCollected = 0;
         
         let reviveCount = 0;
-        const reviveCostSchedule = [20, 50, 100, 200, 300, 500, 600, 800, 1000];
+        const reviveCostSchedule = [20, 100, 500, 2000, 10000, 50000, 200000, 1000000, 5000000];
 
         let isJumping = false;
         let isSliding = false;
@@ -405,6 +405,7 @@
 
         let audioCtx = null;
         let audioMuted = false;
+        let bgMusicTimer = null;
 
         let playerData = {
             name: "",
@@ -506,12 +507,21 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             
-            const sorted = [...playerData.scores].sort((a, b) => b.km - a.km);
+            // Unique player aggregation: Keep only the highest score for each unique player name
+            const bestScoresMap = {};
+            playerData.scores.forEach(entry => {
+                const key = entry.name.toLowerCase();
+                if (!bestScoresMap[key] || entry.km > bestScoresMap[key].km) {
+                    bestScoresMap[key] = entry;
+                }
+            });
 
-            if (sorted.length === 0) {
+            const uniqueScores = Object.values(bestScoresMap).sort((a, b) => b.km - a.km);
+
+            if (uniqueScores.length === 0) {
                 list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
             } else {
-                sorted.slice(0, 15).forEach((item, index) => {
+                uniqueScores.slice(0, 15).forEach((item, index) => {
                     const row = document.createElement('div');
                     row.className = 'leader-item';
                     
@@ -544,7 +554,61 @@
         function toggleAudio() {
             audioMuted = !audioMuted;
             document.getElementById('sound-btn').innerText = audioMuted ? '🔇' : '🔊';
+            if (audioMuted) {
+                stopBackgroundMusic();
+            } else if (gameState === 'PLAYING') {
+                startBackgroundMusic();
+            }
         }
+
+        function startBackgroundMusic() {
+            stopBackgroundMusic();
+            if (audioMuted || gameState !== 'PLAYING') return;
+
+            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+            let noteIdx = 0;
+            bgMusicTimer = setInterval(() => {
+                if (gameState !== 'PLAYING' || audioMuted || !audioCtx) {
+                    stopBackgroundMusic();
+                    return;
+                }
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(notes[noteIdx], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.18);
+                    noteIdx = (noteIdx + 1) % notes.length;
+                } catch(e) {}
+            }, 180);
+        }
+
+        function stopBackgroundMusic() {
+            if (bgMusicTimer) {
+                clearInterval(bgMusicTimer);
+                bgMusicTimer = null;
+            }
+        }
+
+        // Automatically stop music and sound when leaving the game tab or window
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopBackgroundMusic();
+                if (audioCtx) audioCtx.suspend();
+            } else {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (gameState === 'PLAYING' && !audioMuted) {
+                    startBackgroundMusic();
+                }
+            }
+        });
 
         function playSound(type) {
             if (!audioCtx || audioMuted) return;
@@ -848,7 +912,7 @@
                 activeObstacles.push(towerGroup);
             }
 
-            // Spawn a generous row of coins ($1 in a row)
+            // Spawn a generous row of coins
             const coinLane = (lane + 1) % 3;
             const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8 });
             for (let i = 0; i < 7; i++) {
@@ -891,6 +955,7 @@
             resetTrackAndWorld();
             playerGroup.position.set(0, 0, 0);
             setupCameraForGame();
+            startBackgroundMusic();
         }
 
         function animate() {
@@ -984,6 +1049,7 @@
 
         function triggerGameOver() {
             gameState = 'GAMEOVER';
+            stopBackgroundMusic();
             playSound('crash');
 
             const playerScores = playerData.scores.filter(e => e.name.toLowerCase() === playerData.name.toLowerCase());
@@ -1016,6 +1082,7 @@
                 isJumping = false;
                 isSliding = false;
                 document.getElementById('gameover-screen').style.display = 'none';
+                startBackgroundMusic();
             } else {
                 alert(`Not enough coins! You need ${currentReviveCost} coins to revive.`);
             }
@@ -1023,6 +1090,7 @@
 
         function restartToMenu() {
             gameState = 'MENU';
+            stopBackgroundMusic();
             document.getElementById('gameover-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
