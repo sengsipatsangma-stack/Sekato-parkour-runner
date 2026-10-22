@@ -2,1152 +2,558 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sekato Parkour Runner</title>
     <style>
-        * {
-            box-sizing: border-box;
+        body, html {
             margin: 0;
             padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-        body, html {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #3a88e9;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #111;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        #canvas-container {
+        canvas {
+            display: block;
             width: 100%;
             height: 100%;
+        }
+        .ui-layer {
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 1;
-        }
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
-            z-index: 10;
             pointer-events: none;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 12px;
+            box-sizing: border-box;
+            padding: 20px;
         }
-        .hud {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            gap: 6px;
-        }
-        .hud-card {
-            background: rgba(18, 28, 45, 0.88);
-            border: 2px solid #00ffcc;
-            border-radius: 12px;
-            padding: 6px 10px;
-            color: #fff;
-            font-weight: 800;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-            backdrop-filter: blur(6px);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .hud-card span {
-            color: #00ffcc;
-        }
-        .icon-btn {
+        .interactive {
             pointer-events: auto;
-            cursor: pointer;
-            font-size: 18px;
-            background: rgba(18, 28, 45, 0.9);
-            color: #fff;
-            border: 2px solid #00ffcc;
-            border-radius: 50%;
-            width: 38px;
-            height: 38px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
         }
-        
-        #menu-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 20;
-            pointer-events: none;
+        .hud-top {
             display: flex;
-            flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 25px 15px 20px 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
-        .header-title-box {
+        .panel {
+            background: rgba(15, 15, 25, 0.9);
+            border: 2px solid #00ffcc;
+            border-radius: 16px;
+            padding: 24px;
             text-align: center;
-            pointer-events: auto;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            max-width: 400px;
+            width: 90%;
+            margin: auto;
         }
-        .modal-title {
-            color: #ffffff;
-            font-size: 32px;
-            font-weight: 900;
+        h1 {
+            margin-top: 0;
+            color: #00ffcc;
+            font-size: 28px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 12px rgba(0, 255, 204, 0.8), 0 4px 8px rgba(0, 0, 0, 0.6);
         }
-        
-        .lobby-bottom-panel {
-            pointer-events: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            max-width: 360px;
-            background: rgba(15, 25, 40, 0.92);
-            padding: 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(0, 255, 204, 0.3);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-        .character-select {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            justify-content: center;
-        }
-        .char-card {
-            border: 3px solid #00ffcc;
-            border-radius: 14px;
-            padding: 10px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 0 18px rgba(0, 255, 200, 0.5);
-            background: rgba(40, 65, 95, 0.9);
-        }
-        .char-icon {
-            font-size: 32px;
-        }
-        .char-name {
-            color: #fff;
-            font-weight: 800;
-            font-size: 15px;
-            margin-top: 4px;
-        }
-        
-        .btn {
-            background: linear-gradient(45deg, #ff4500, #ff8700);
+        button {
+            background: linear-gradient(135deg, #00ffcc, #0099ff);
             border: none;
-            border-radius: 30px;
-            color: #fff;
+            color: #000;
+            padding: 12px 24px;
             font-size: 18px;
-            font-weight: 900;
-            padding: 12px 0;
-            width: 100%;
+            font-weight: bold;
+            border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
-            letter-spacing: 1px;
-            transition: transform 0.1s ease;
-            text-align: center;
+            margin-top: 15px;
             text-transform: uppercase;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 10px rgba(0, 255, 204, 0.3);
         }
-        .btn:active {
-            transform: scale(0.96);
+        button:active {
+            transform: scale(0.95);
         }
-        .btn-secondary {
-            background: #2a3b50;
-            font-size: 12px;
-            padding: 8px 0;
-            box-shadow: none;
-            border: 1px solid #4a6b88;
-            flex: 1;
-        }
-
-        .modal {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 30;
-            background: rgba(15, 25, 40, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            pointer-events: auto;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 320px;
-            background: #18283b;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid #324a66;
-            margin-bottom: 12px;
-        }
-        .setting-label {
-            color: #00ffcc;
-            font-weight: 800;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-        .toggle-btn {
-            background: #ff4500;
-            color: #fff;
-            font-weight: 900;
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            border: none;
-            min-width: 80px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .toggle-btn.off {
-            background: #3a4f66;
-            color: #aaa;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            max-width: 320px;
-            margin-bottom: 12px;
-        }
-        .input-group label {
-            color: #00ffcc;
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-        .input-group input, .input-group select {
-            background: #1a2636;
-            border: 2px solid #3d5470;
-            border-radius: 10px;
-            padding: 10px 14px;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .leaderboard-box {
-            width: 100%;
-            max-width: 320px;
-            max-height: 240px;
-            overflow-y: auto;
-            background: #162232;
-            border: 2px solid #334860;
-            border-radius: 12px;
-            padding: 10px;
+        input, select {
+            width: 80%;
+            padding: 12px;
             margin: 10px 0;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 16px;
+            text-align: center;
         }
-        .leader-item {
+        .hidden {
+            display: none !important;
+        }
+        .leaderboard-list {
+            max-height: 150px;
+            overflow-y: auto;
+            margin: 10px 0;
+            text-align: left;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .leaderboard-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 10px;
-            border-bottom: 1px solid #25364a;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
         }
-        .rank-1 { color: #ffd700 !important; font-weight: 900; }
-        .rank-2 { color: #c0c0c0 !important; font-weight: 900; }
-        .rank-3 { color: #cd7f32 !important; font-weight: 900; }
     </style>
+
+    <!-- Three.js r128 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Firebase App & Firestore SDKs -->
+    <!-- Firebase SDKs v8.10.1 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
-    <div id="canvas-container"></div>
-
-    <div id="ui-layer">
-        <div class="hud" id="game-hud" style="display: none;">
-            <div class="hud-card">🏃 <span id="dist-val">0</span> m</div>
-            <div class="hud-card">🪙 <span id="coin-val">0</span></div>
-            <div style="display: flex; gap: 6px;">
-                <div class="icon-btn" onclick="openControlsModal()">⚙️</div>
-                <div class="icon-btn" id="sound-btn" onclick="toggleAudio()">🔊</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONTROL SETTINGS MODAL -->
-    <div id="controls-modal" class="modal" style="display: none;">
-        <div class="modal-title" style="font-size: 24px; color: #00ffcc;">⚙️ SETTINGS</div>
-        <div style="margin-bottom: 20px; color:#aaa; font-size:12px; text-align: center;">Steering & Audio Preferences</div>
-
-        <div class="setting-row">
-            <span class="setting-label">Inverted Steering</span>
-            <button class="toggle-btn" id="toggle-invert" onclick="toggleInvertedSetting()">ON</button>
+    <div class="ui-layer">
+        <!-- HUD TOP -->
+        <div id="hud" class="hidden">
+            <div>Score: <span id="hud-score">0</span>m</div>
+            <div>Coins: 🪙 <span id="hud-coins">0</span></div>
         </div>
 
-        <div style="color: #ddd; font-size: 11px; margin-bottom: 15px; line-height: 1.4; text-align: center; max-width: 300px;">
-            <span id="invert-desc-text">ON: Swipe Right = Move Left | Swipe Left = Move Right</span>
-        </div>
-
-        <button class="btn" onclick="closeControlsModal()" style="margin-top: 10px;">RESUME / SAVE</button>
-    </div>
-
-    <!-- PROFILE CREATION MODAL -->
-    <div id="profile-modal" class="modal" style="display: none;">
-        <div class="modal-title" style="font-size: 26px;">CREATE PROFILE</div>
-        <div style="color: #aaa; font-size: 12px; margin-bottom: 15px; text-align: center;">Enter your runner identity</div>
-        
-        <div class="input-group">
-            <label>Player Name</label>
-            <input type="text" id="input-name" placeholder="Enter name" maxlength="12">
-        </div>
-        <div class="input-group">
-            <label>Gender (Character)</label>
-            <select id="input-gender" onchange="previewGenderSelection(this.value)">
-                <option value="Male">Male ♂ (Sekato)</option>
-                <option value="Female">Female ♀ (Aika)</option>
+        <!-- PROFILE SETUP SCREEN -->
+        <div id="screen-profile" class="panel interactive">
+            <h1>Sekato Parkour</h1>
+            <p>Enter your runner tag to start:</p>
+            <input type="text" id="input-username" placeholder="Runner Name" maxlength="12">
+            <br>
+            <label>Character:</label>
+            <select id="select-char">
+                <option value="sekato">Sekato (♂)</option>
+                <option value="aika">Aika (♀)</option>
             </select>
+            <br>
+            <button id="btn-start-profile">Enter Game</button>
         </div>
 
-        <button class="btn" onclick="saveProfile()" style="margin-top: 10px;">SAVE PROFILE</button>
-    </div>
-
-    <!-- HIGH SCORE LIST MODAL -->
-    <div id="leaderboard-modal" class="modal" style="display: none;">
-        <div class="modal-title" style="font-size: 26px; color: #ffd700;">🏆 GLOBAL SCORES</div>
-        
-        <div class="leaderboard-box" id="leaderboard-list">Loading cloud scores...</div>
-
-        <button class="btn" onclick="closeLeaderboard()" style="margin-top: 10px;">BACK TO LOBBY</button>
-    </div>
-
-    <!-- MAIN MENU / LOBBY -->
-    <div id="menu-screen">
-        <div class="header-title-box">
-            <div class="modal-title">SEKATO RUNNER</div>
-        </div>
-
-        <div class="lobby-bottom-panel">
-            <div class="character-select">
-                <div class="char-card" id="char-display-card">
-                    <div class="char-icon" id="char-icon-display">👦</div>
-                    <div class="char-name" id="char-name-display">SEKATO (♂)</div>
-                </div>
-            </div>
-
-            <button class="btn" onclick="startGame()">START RUN</button>
-            <div style="display: flex; gap: 6px; width: 100%;">
-                <button class="btn btn-secondary" onclick="openControlsModal()">⚙️ SETTINGS</button>
-                <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 SCORES</button>
-                <button class="btn btn-secondary" onclick="editProfile()">👤 PROFILE</button>
+        <!-- MAIN MENU SCREEN -->
+        <div id="screen-menu" class="panel interactive hidden">
+            <h1>Sekato Parkour</h1>
+            <p>Welcome, <span id="display-username">Runner</span>!</p>
+            <button id="btn-play">Play Game</button>
+            <button id="btn-settings-toggle">Settings</button>
+            
+            <h3>Global Leaderboard</h3>
+            <div id="leaderboard-container" class="leaderboard-list">
+                <div class="leaderboard-item"><span>Loading scores...</span></div>
             </div>
         </div>
-    </div>
 
-    <!-- GAME OVER SCREEN -->
-    <div id="gameover-screen" class="modal" style="display: none;">
-        <div class="modal-title" style="color: #ff1744;">GAME OVER</div>
-        <div id="high-score-badge" style="color: #ffd700; font-size: 18px; margin: 8px 0; font-weight: 800; display: none;">🎉 NEW HIGH SCORE!</div>
-        <div id="final-stats" style="font-size: 15px; margin: 10px 0; color: #fff; font-weight:700;">Distance: 0 m | Coins: 0</div>
+        <!-- SETTINGS SCREEN -->
+        <div id="screen-settings" class="panel interactive hidden">
+            <h1>Settings</h1>
+            <label style="display:block; margin: 15px 0; cursor: pointer;">
+                <input type="checkbox" id="check-inverted" style="width:auto;"> Inverted Steering
+            </label>
+            <button id="btn-back-menu">Back to Menu</button>
+        </div>
 
-        <button class="btn" id="revive-btn" onclick="reviveRun()" style="background: linear-gradient(45deg, #00b0ff, #00e676); margin-bottom: 10px;">REVIVE (20 🪙)</button>
-        <button class="btn" style="background: #333; box-shadow: none;" onclick="restartToMenu()">MAIN MENU</button>
+        <!-- GAME OVER / REVIVE SCREEN -->
+        <div id="screen-gameover" class="panel interactive hidden">
+            <h1>Wiped Out!</h1>
+            <p>Distance: <span id="go-score">0</span>m</p>
+            <button id="btn-revive">Revive (<span id="revive-cost">20</span> Coins)</button>
+            <button id="btn-menu-home">Main Menu</button>
+        </div>
     </div>
 
     <script>
-        // FIREBASE CLOUD CONFIGURATION (Replace with your own project config for global friend sharing)
+        // --- FIREBASE CONFIGURATION (Linked to your project) ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForDemoPurposesOnly",
-            authDomain: "sekato-runner.firebaseapp.com",
-            projectId: "sekato-runner",
-            storageBucket: "sekato-runner.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123:web:abc"
+            apiKey: "AIzaSyCMzkmGlDUTGD-GSqz0...", // Replace with your exact full key if needed
+            authDomain: "sekato-runner.firebaseapp.com",[span_2](start_span)[span_2](end_span)
+            projectId: "sekato-runner",[span_3](start_span)[span_3](end_span)
+            storageBucket: "sekato-runner.firebasestorage.app",[span_4](start_span)[span_4](end_span)
+            messagingSenderId: "479452830068",[span_5](start_span)[span_5](end_span)
+            appId: "1:479452830068:web:4ed6d1...",[span_6](start_span)[span_6](end_span)
+            measurementId: "G-R9JHC0TG5F[span_7](start_span)"[span_7](end_span)
         };
-        
-        let db = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } catch(e) {
-            console.warn("Firebase initialized in offline fallback mode.");
-        }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        let scene, camera, renderer;
-        let playerGroup, characterMeshGroup;
-        let leftArm, rightArm, leftLeg, rightLeg;
-        let selectedCharacter = 'Sekato';
-        let gameState = 'MENU';
+        // --- GAME STATE & STORAGE ---
+        const REVIVE_SCHEDULE = [20, 100, 500, 2000, 10000, 50000, 200000, 1000000, 5000000];
+        let gameState = {
+            username: localStorage.getItem('sekato_user') || '',
+            character: localStorage.getItem('sekato_char') || 'sekato',
+            coins: parseInt(localStorage.getItem('sekato_coins') || '100'), // Starter coins for testing revives
+            inverted: localStorage.getItem('sekato_inv') === 'true',
+            reviveCount: 0,
+            score: 0,
+            alive: false
+        };
 
-        let currentLane = 1; 
-        const laneX = [-3.0, 0, 3.0]; 
-        let forwardSpeed = 0.5;
-        const maxSpeed = 1.1;
-        let distanceTraveled = 0;
-        let coinsCollected = 0;
-        
-        let reviveCount = 0;
-        const reviveCostSchedule = [20, 100, 500, 2000, 10000, 50000, 200000, 1000000, 5000000];
-
-        let isJumping = false;
-        let isSliding = false;
-        let verticalVelocity = 0;
-        const gravity = -0.12;
-        const jumpPower = 0.78;
-
-        const trackTiles = [];
-        const activeObstacles = [];
-        const activeCoins = [];
-        let runAnimTime = 0;
-        let nextSpawnZ = 30;
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-
+        // --- AUDIO SYSTEM (Web Audio API with Tab Safety) ---
         let audioCtx = null;
-        let audioMuted = false;
-        let bgMusicTimer = null;
-
-        let playerData = {
-            name: "",
-            gender: "Male",
-            invertedControls: true,
-            bestScore: 0
-        };
-
-        function openControlsModal() {
-            updateControlsUI();
-            document.getElementById('controls-modal').style.display = 'flex';
-        }
-
-        function closeControlsModal() {
-            localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
-            document.getElementById('controls-modal').style.display = 'none';
-        }
-
-        function toggleInvertedSetting() {
-            playerData.invertedControls = !playerData.invertedControls;
-            updateControlsUI();
-        }
-
-        function updateControlsUI() {
-            const invBtn = document.getElementById('toggle-invert');
-            const descText = document.getElementById('invert-desc-text');
-            if (playerData.invertedControls) {
-                invBtn.innerText = 'ON';
-                invBtn.classList.remove('off');
-                descText.innerText = "INVERTED: Swipe Right = Move Left | Swipe Left = Move Right";
-            } else {
-                invBtn.innerText = 'OFF';
-                invBtn.classList.add('off');
-                descText.innerText = "DIRECT: Swipe Right = Move Right | Swipe Left = Move Left";
-            }
-        }
-
-        function previewGenderSelection(genderVal) {
-            selectedCharacter = (genderVal === 'Female') ? 'Aika' : 'Sekato';
-            updateCharacterLobbyCard();
-            if (characterMeshGroup) buildCuteCharacter();
-        }
-
-        function loadStorageData() {
-            const saved = localStorage.getItem('SekatoRunner_Profile');
-            if (saved) {
-                try {
-                    playerData = Object.assign(playerData, JSON.parse(saved));
-                } catch(e) {}
-            }
-            
-            if (!playerData.name || playerData.name.trim() === "") {
-                document.getElementById('profile-modal').style.display = 'flex';
-            } else {
-                applyGenderToCharacter();
-            }
-            updateControlsUI();
-        }
-
-        function applyGenderToCharacter() {
-            selectedCharacter = (playerData.gender === 'Female') ? 'Aika' : 'Sekato';
-            updateCharacterLobbyCard();
-            if (characterMeshGroup) buildCuteCharacter();
-        }
-
-        function updateCharacterLobbyCard() {
-            const iconEl = document.getElementById('char-icon-display');
-            const nameEl = document.getElementById('char-name-display');
-            if (selectedCharacter === 'Aika') {
-                iconEl.innerText = '👧';
-                nameEl.innerText = 'AIKA (♀)';
-            } else {
-                iconEl.innerText = '👦';
-                nameEl.innerText = 'SEKATO (♂)';
-            }
-        }
-
-        function saveProfile() {
-            const nameVal = document.getElementById('input-name').value.trim();
-            const genderVal = document.getElementById('input-gender').value;
-            if (!nameVal) {
-                alert("Please enter your player name!");
-                return;
-            }
-            playerData.name = nameVal;
-            playerData.gender = genderVal;
-            localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
-            document.getElementById('profile-modal').style.display = 'none';
-            applyGenderToCharacter();
-            syncScoreToCloud();
-        }
-
-        function editProfile() {
-            document.getElementById('input-name').value = playerData.name;
-            document.getElementById('input-gender').value = playerData.gender;
-            document.getElementById('profile-modal').style.display = 'flex';
-        }
-
-        async function syncScoreToCloud() {
-            if (!db || !playerData.name) return;
-            try {
-                const playerRef = db.collection('leaderboard').doc(playerData.name.toLowerCase());
-                const doc = await playerRef.get();
-                const existingBest = doc.exists ? doc.data().km : 0;
-                
-                if (playerData.bestScore > existingBest) {
-                    await playerRef.set({
-                        name: playerData.name,
-                        gender: playerData.gender,
-                        km: playerData.bestScore,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-            } catch (e) {
-                console.warn("Cloud sync skipped:", e);
-            }
-        }
-
-        async function openLeaderboard() {
-            document.getElementById('leaderboard-modal').style.display = 'flex';
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">Loading global scores...</div>';
-
-            let uniqueScores = [];
-
-            if (db) {
-                try {
-                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(20).get();
-                    snapshot.forEach(doc => {
-                        uniqueScores.push(doc.data());
-                    });
-                } catch (e) {
-                    console.warn("Firestore fetch error, falling back to local storage");
-                }
-            }
-
-            if (uniqueScores.length === 0 && playerData.name) {
-                uniqueScores.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
-            }
-
-            list.innerHTML = '';
-            if (uniqueScores.length === 0) {
-                list.innerHTML = '<div style="color:#aaa; text-align:center; padding:15px;">No runs recorded yet!</div>';
-            } else {
-                uniqueScores.sort((a, b) => b.km - a.km).forEach((item, index) => {
-                    const row = document.createElement('div');
-                    row.className = 'leader-item';
-                    
-                    let rankIcon = `#${index+1}`;
-                    let rankClass = '';
-                    if (index === 0) { rankIcon = '🥇 #1'; rankClass = 'rank-1'; }
-                    else if (index === 1) { rankIcon = '🥈 #2'; rankClass = 'rank-2'; }
-                    else if (index === 2) { rankIcon = '🥉 #3'; rankClass = 'rank-3'; }
-
-                    row.innerHTML = `<span class="${rankClass}">${rankIcon} ${item.name} (${item.gender === 'Male' ? '♂' : '♀'})</span><span class="${rankClass}">${Math.floor(item.km)} m</span>`;
-                    list.appendChild(row);
-                });
-            }
-        }
-
-        function closeLeaderboard() {
-            document.getElementById('leaderboard-modal').style.display = 'none';
-        }
-
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-
-        function toggleAudio() {
-            audioMuted = !audioMuted;
-            document.getElementById('sound-btn').innerText = audioMuted ? '🔇' : '🔊';
-            if (audioMuted) {
-                stopBackgroundMusic();
-            } else if (gameState === 'PLAYING') {
-                startBackgroundMusic();
-            }
+        function playTone(freq, type, duration) {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
         }
-
-        function startBackgroundMusic() {
-            stopBackgroundMusic();
-            if (audioMuted || gameState !== 'PLAYING') return;
-
-            const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
-            let noteIdx = 0;
-            bgMusicTimer = setInterval(() => {
-                if (gameState !== 'PLAYING' || audioMuted || !audioCtx) {
-                    stopBackgroundMusic();
-                    return;
-                }
-                try {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(notes[noteIdx], audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.18);
-                    noteIdx = (noteIdx + 1) % notes.length;
-                } catch(e) {}
-            }, 180);
-        }
-
-        function stopBackgroundMusic() {
-            if (bgMusicTimer) {
-                clearInterval(bgMusicTimer);
-                bgMusicTimer = null;
-            }
-        }
-
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopBackgroundMusic();
-                if (audioCtx) audioCtx.suspend();
-            } else {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                if (gameState === 'PLAYING' && !audioMuted) {
-                    startBackgroundMusic();
-                }
+            if (document.hidden && audioCtx && audioCtx.state === 'running') {
+                audioCtx.suspend();
             }
         });
 
-        function playSound(type) {
-            if (!audioCtx || audioMuted) return;
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                const now = audioCtx.currentTime;
+        // --- THREE.JS ENGINE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        scene.fog = new THREE.FogExp2(0x1a1a2e, 0.015);
 
-                if (type === 'jump') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(250, now);
-                    osc.frequency.exponentialRampToValueAtTime(650, now + 0.12);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    osc.start(now); osc.stop(now + 0.12);
-                } else if (type === 'roll') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(350, now);
-                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.15);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    osc.start(now); osc.stop(now + 0.15);
-                } else if (type === 'coin') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(987, now);
-                    osc.frequency.setValueAtTime(1318, now + 0.06);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    osc.start(now); osc.stop(now + 0.2);
-                } else if (type === 'crash') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(160, now);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                    gain.gain.setValueAtTime(0.35, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now); osc.stop(now + 0.3);
-                }
-            } catch (e) {}
-        }
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 4, 7);
+        camera.lookAt(0, 1, -5);
 
-        function resetTrackAndWorld() {
-            while (trackTiles.length > 0) {
-                const t = trackTiles.pop();
-                scene.remove(t.group);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // Track & Environment
+        const laneWidth = 2.5;
+        const trackLength = 120;
+        let trackSegments = [];
+
+        function createTrackSegment(zPos) {
+            const group = new THREE.Group();
+            // Lanes
+            for(let i = -1; i <= 1; i++) {
+                let color = (i === 0) ? 0x222233 : 0x161622;
+                let mesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(laneWidth, trackLength),
+                    new THREE.MeshStandardMaterial({ color: color })
+                );
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.set(i * laneWidth, 0, zPos);
+                group.add(mesh);
             }
-            while (activeObstacles.length > 0) {
-                const o = activeObstacles.pop();
-                scene.remove(o);
-            }
-            while (activeCoins.length > 0) {
-                const c = activeCoins.pop();
-                scene.remove(c);
-            }
-
-            nextSpawnZ = 30;
-            for (let i = 0; i < 25; i++) {
-                spawnTrackTile(i * 20);
-            }
+            scene.add(group);
+            trackSegments.push({ group, z: zPos });
         }
+        for(let i = 0; i < 4; i++) createTrackSegment(-i * trackLength);
 
-        function initEngine() {
-            const container = document.getElementById('canvas-container');
-            
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x3a88e9);
-            scene.fog = new THREE.FogExp2(0x3a88e9, 0.008);
+        // Player Mesh
+        const playerGroup = new THREE.Group();
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+        const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 0.5), bodyMat);
+        bodyMesh.position.y = 0.7;
+        playerGroup.add(bodyMesh);
+        scene.add(playerGroup);
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
+        let playerLane = 0; // -1: Left, 0: Center, 1: Right
+        let playerY = 0;
+        let playerVY = 0;
+        let isJumping = false;
+        let isRolling = false;
+        let gameSpeed = 0.5;
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-            scene.add(ambientLight);
+        // Obstacles & Coins
+        let obstacles = [];
+        let coins = [];
 
-            const dirLight = new THREE.DirectionalLight(0xffeedd, 1.1);
-            dirLight.position.set(20, 40, -20);
-            scene.add(dirLight);
-
-            playerGroup = new THREE.Group();
-            scene.add(playerGroup);
-            
-            characterMeshGroup = new THREE.Group();
-            playerGroup.add(characterMeshGroup);
-
-            resetTrackAndWorld();
-            loadStorageData();
-            setupCameraForLobby();
-
-            window.addEventListener('resize', onWindowResize);
-            
-            window.addEventListener('touchstart', e => {
-                initAudio();
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, {passive: true});
-
-            window.addEventListener('touchend', e => {
-                if (gameState !== 'PLAYING') return;
-                let dx = e.changedTouches[0].clientX - touchStartX;
-                let dy = e.changedTouches[0].clientY - touchStartY;
-                
-                if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        let moveDirection = dx > 0 ? 1 : -1;
-                        if (playerData.invertedControls) {
-                            moveDirection *= -1; 
-                        }
-
-                        if (moveDirection > 0 && currentLane < 2) currentLane++;
-                        else if (moveDirection < 0 && currentLane > 0) currentLane--;
-                    } else {
-                        if (dy < -15 && !isJumping && !isSliding) {
-                            isJumping = true; 
-                            verticalVelocity = jumpPower; 
-                            playSound('jump');
-                        } else if (dy > 15 && !isSliding) {
-                            triggerSlide(); 
-                        }
-                    }
-                }
-            }, {passive: true});
-
-            window.addEventListener('keydown', e => {
-                initAudio();
-                if (gameState !== 'PLAYING') return;
-                let isLeft = (e.key === 'ArrowLeft' || e.key === 'a');
-                let isRight = (e.key === 'ArrowRight' || e.key === 'd');
-
-                if (playerData.invertedControls) {
-                    let temp = isLeft;
-                    isLeft = isRight;
-                    isRight = temp;
-                }
-
-                if (isLeft && currentLane > 0) currentLane--;
-                if (isRight && currentLane < 2) currentLane++;
-                if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && !isJumping && !isSliding) { 
-                    isJumping = true; 
-                    verticalVelocity = jumpPower; 
-                    playSound('jump');
-                }
-                if ((e.key === 'ArrowDown' || e.key === 's') && !isSliding) { 
-                    triggerSlide(); 
-                }
-            });
-
-            animate();
-        }
-
-        function buildCuteCharacter() {
-            while (characterMeshGroup.children.length > 0) {
-                characterMeshGroup.remove(characterMeshGroup.children[0]);
-            }
-
-            const isSekato = selectedCharacter === 'Sekato';
-            const skinMat = new THREE.MeshLambertMaterial({ color: 0xffdbac });
-            const shirtMat = new THREE.MeshLambertMaterial({ color: isSekato ? 0xffcc00 : 0xff66b2 });
-            const darkMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
-
-            const charRoot = new THREE.Group();
-
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skinMat);
-            head.position.y = 1.35;
-            charRoot.add(head);
-
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.55, 0.35), shirtMat);
-            torso.position.y = 0.8;
-            charRoot.add(torso);
-
-            const armGeo = new THREE.BoxGeometry(0.16, 0.5, 0.16);
-            leftArm = new THREE.Mesh(armGeo, shirtMat);
-            leftArm.position.set(-0.35, 0.8, 0);
-            leftArm.geometry.translate(0, -0.2, 0);
-            charRoot.add(leftArm);
-
-            rightArm = new THREE.Mesh(armGeo, shirtMat);
-            rightArm.position.set(0.35, 0.8, 0);
-            rightArm.geometry.translate(0, -0.2, 0);
-            charRoot.add(rightArm);
-
-            const legGeo = new THREE.BoxGeometry(0.18, 0.5, 0.18);
-            leftLeg = new THREE.Mesh(legGeo, darkMat);
-            leftLeg.position.set(-0.13, 0.5, 0);
-            leftLeg.geometry.translate(0, -0.25, 0);
-            charRoot.add(leftLeg);
-
-            rightLeg = new THREE.Mesh(legGeo, darkMat);
-            rightLeg.position.set(0.13, 0.5, 0);
-            rightLeg.geometry.translate(0, -0.25, 0);
-            charRoot.add(rightLeg);
-
-            characterMeshGroup.add(charRoot);
-        }
-
-        function setupCameraForLobby() {
-            camera.position.set(0, 1.4, -5.0);
-            camera.lookAt(0, 0.9, 0);
-            playerGroup.position.set(0, 0, 0);
-            playerGroup.rotation.y = Math.PI;
-        }
-
-        function setupCameraForGame() {
-            playerGroup.rotation.y = 0;
-            camera.position.set(0, 4.2, -9.5);
-            camera.lookAt(0, 0.6, 7);
-        }
-
-        function createCobblestoneCanvas() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ff3366';
-            ctx.fillRect(0,0,128,128);
-            const cols = ['#4361ee', '#48cae4', '#ffb703', '#f72585', '#7209b7'];
-            for(let y=0; y<128; y+=16) {
-                for(let x=0; x<128; x+=32) {
-                    ctx.fillStyle = cols[Math.floor(Math.random()*cols.length)];
-                    ctx.fillRect(x + (y%32===0?0:8), y, 28, 12);
-                }
-            }
-            return new THREE.CanvasTexture(canvas);
-        }
-
-        const cobbleTexture = createCobblestoneCanvas();
-        cobbleTexture.wrapS = THREE.RepeatWrapping;
-        cobbleTexture.wrapT = THREE.RepeatWrapping;
-        cobbleTexture.repeat.set(1, 4);
-
-        function spawnTrackTile(zPos) {
-            const tileGroup = new THREE.Group();
-            
-            const tileMat = new THREE.MeshLambertMaterial({ map: cobbleTexture });
-            const tile = new THREE.Mesh(new THREE.BoxGeometry(10, 2, 20), tileMat);
-            tile.position.set(0, -1, zPos + 10);
-            tileGroup.add(tile);
-
-            const bColors = [0xff8585, 0xffd166, 0x48cae4, 0x90e0ef, 0xb5179e];
-            for (let side = -1; side <= 1; side += 2) {
-                const bHeight = 16 + Math.random() * 12;
-                const bMat = new THREE.MeshLambertMaterial({ color: bColors[Math.floor(Math.random() * bColors.length)] });
-                const building = new THREE.Mesh(new THREE.BoxGeometry(10, bHeight, 20), bMat);
-                building.position.set(side * 10, (bHeight / 2) - 2, zPos + 10);
-                tileGroup.add(building);
-            }
-
-            scene.add(tileGroup);
-            trackTiles.push({ group: tileGroup, z: zPos });
-        }
-
-        function checkAndSpawnObstacles() {
-            while (nextSpawnZ < playerGroup.position.z + 180) {
-                spawnObstacleCluster(nextSpawnZ);
-                nextSpawnZ += 14 + Math.random() * 8;
-            }
-        }
-
-        function spawnObstacleCluster(zPos) {
-            const lane = Math.floor(Math.random() * 3);
-            const randType = Math.random();
-
-            if (randType < 0.3) {
-                const wallGroup = new THREE.Group();
-                const wallMat = new THREE.MeshLambertMaterial({ color: 0xff3300 });
-                const wall = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 0.4), wallMat);
-                wall.position.y = 0.55;
-                wallGroup.add(wall);
-                wallGroup.position.set(laneX[lane], 0, zPos);
-                wallGroup.userData = { type: 'jump_only', depth: 0.4 };
-                scene.add(wallGroup);
-                activeObstacles.push(wallGroup);
-            } else if (randType < 0.6) {
-                const archGroup = new THREE.Group();
-                const archMat = new THREE.MeshLambertMaterial({ color: 0x00ccff });
-                const topBar = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.8, 0.4), archMat);
-                topBar.position.y = 2.0;
-                archGroup.add(topBar);
-
-                archGroup.position.set(laneX[lane], 0, zPos);
-                archGroup.userData = { type: 'roll_only', depth: 0.4 };
-                scene.add(archGroup);
-                activeObstacles.push(archGroup);
+        function spawnRow(zPos) {
+            // Random obstacle or coin row
+            let lane = Math.floor(Math.random() * 3) - 1;
+            let type = Math.random();
+            if (type < 0.3) {
+                // Jump-Only (🧱)
+                let obs = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.8), new THREE.MeshStandardMaterial({color: 0xff3355}));
+                obs.position.set(lane * laneWidth, 0.4, zPos);
+                obs.userData = { type: 'jump', lane: lane };
+                scene.add(obs);
+                obstacles.push(obs);
+            } else if (type < 0.6) {
+                // Roll-Only (🕳️ / Barrier above)
+                let obs = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 0.8), new THREE.MeshStandardMaterial({color: 0xffaa00}));
+                obs.position.set(lane * laneWidth, 1.8, zPos);
+                obs.userData = { type: 'roll', lane: lane };
+                scene.add(obs);
+                obstacles.push(obs);
             } else {
-                const towerGroup = new THREE.Group();
-                const towerMat = new THREE.MeshLambertMaterial({ color: 0x9900cc });
-                const tower = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.5, 0.6), towerMat);
-                tower.position.y = 2.25;
-                towerGroup.add(tower);
-
-                towerGroup.position.set(laneX[lane], 0, zPos);
-                towerGroup.userData = { type: 'dodge_only', depth: 0.6 };
-                scene.add(towerGroup);
-                activeObstacles.push(towerGroup);
-            }
-
-            const coinLane = (lane + 1) % 3;
-            const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8 });
-            for (let i = 0; i < 7; i++) {
-                const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.1, 12), coinMat);
-                coin.rotation.x = Math.PI / 2;
-                coin.position.set(laneX[coinLane], 0.8, zPos + (i * 1.8));
-                scene.add(coin);
-                activeCoins.push(coin);
+                // Coin Row (🪙)
+                for(let c = 0; c < 3; c++) {
+                    let coin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16), new THREE.MeshStandardMaterial({color: 0xffd700, metalness: 0.8}));
+                    coin.rotation.x = Math.PI / 2;
+                    coin.position.set(lane * laneWidth, 0.8, zPos - c * 2);
+                    scene.add(coin);
+                    coins.push(coin);
+                }
             }
         }
 
-        function triggerSlide() {
-            isSliding = true;
-            characterMeshGroup.scale.set(1, 0.4, 1);
-            characterMeshGroup.position.y = -0.2;
-            playSound('roll');
+        // Controls (Keyboard & Swipe)
+        let touchStartX = 0, touchStartY = 0;
+        window.addEventListener('keydown', e => {
+            if (!gameState.alive) return;
+            let dir = gameState.inverted ? -1 : 1;
+            if (e.key === 'ArrowLeft' || e.key === 'a') { playerLane = Math.max(-1, playerLane - 1 * dir); playTone(300, 'sine', 0.1); }
+            if (e.key === 'ArrowRight' || e.key === 'd') { playerLane = Math.min(1, playerLane + 1 * dir); playTone(400, 'sine', 0.1); }
+            if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping) { playerVY = 0.25; isJumping = true; playTone(600, 'triangle', 0.2); }
+            if ((e.key === 'ArrowDown' || e.key === 's') && !isRolling) { isRolling = true; setTimeout(() => isRolling = false, 600); playTone(200, 'sawtooth', 0.2); }
+        });
 
-            setTimeout(() => {
-                characterMeshGroup.scale.set(1, 1, 1);
-                characterMeshGroup.position.y = 0;
-                isSliding = false;
-            }, 550);
+        window.addEventListener('touchstart', e => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+        window.addEventListener('touchend', e => {
+            if (!gameState.alive) return;
+            let dx = e.changedTouches[0].clientX - touchStartX;
+            let dy = e.changedTouches[0].clientY - touchStartY;
+            let dir = gameState.inverted ? -1 : 1;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 30) { playerLane = Math.min(1, playerLane + 1 * dir); playTone(400, 'sine', 0.1); }
+                else if (dx < -30) { playerLane = Math.max(-1, playerLane - 1 * dir); playTone(300, 'sine', 0.1); }
+            } else {
+                if (dy < -30 && !isJumping) { playerVY = 0.25; isJumping = true; playTone(600, 'triangle', 0.2); }
+                else if (dy > 30 && !isRolling) { isRolling = true; setTimeout(() => isRolling = false, 600); playTone(200, 'sawtooth', 0.2); }
+            }
+        });
+
+        // --- UI & FLOW MANAGEMENT ---
+        function showScreen(screenId) {
+            ['screen-profile', 'screen-menu', 'screen-settings', 'screen-gameover', 'hud'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            if(screenId === 'hud') document.getElementById('hud').classList.remove('hidden');
         }
+
+        // Initialize UI values
+        if (gameState.username) {
+            document.getElementById('input-username').value = gameState.username;
+            document.getElementById('display-username').innerText = gameState.username;
+            showScreen('screen-menu');
+            fetchLeaderboard();
+        }
+
+        document.getElementById('btn-start-profile').onclick = () => {
+            let name = document.getElementById('input-username').value.trim();
+            if (!name) return alert('Please enter a runner name!');
+            gameState.username = name;
+            gameState.character = document.getElementById('select-char').value;
+            localStorage.setItem('sekato_user', gameState.username);
+            localStorage.setItem('sekato_char', gameState.character);
+            document.getElementById('display-username').innerText = gameState.username;
+            showScreen('screen-menu');
+            fetchLeaderboard();
+        };
+
+        document.getElementById('btn-play').onclick = () => {
+            initAudio();
+            startGame();
+        };
+
+        document.getElementById('btn-settings-toggle').onclick = () => showScreen('screen-settings');
+        document.getElementById('btn-back-menu').onclick = () => showScreen('screen-menu');
+        document.getElementById('check-inverted').onchange = (e) => {
+            gameState.inverted = e.target.checked;
+            localStorage.setItem('sekato_inv', gameState.inverted);
+        };
+
+        document.getElementById('btn-menu-home').onclick = () => {
+            showScreen('screen-menu');
+            fetchLeaderboard();
+        };
+
+        document.getElementById('btn-revive').onclick = () => {
+            let cost = REVIVE_SCHEDULE[Math.min(gameState.reviveCount, REVIVE_SCHEDULE.length - 1)];
+            if (gameState.coins >= cost) {
+                gameState.coins -= cost;
+                gameState.reviveCount++;
+                localStorage.setItem('sekato_coins', gameState.coins);
+                gameState.alive = true;
+                showScreen('hud');
+            } else {
+                alert('Not enough coins for revive!');
+            }
+        };
 
         function startGame() {
-            if (!playerData.name || playerData.name.trim() === "") {
-                editProfile();
-                return;
-            }
-            initAudio();
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-hud').style.display = 'flex';
-            gameState = 'PLAYING';
-            distanceTraveled = 0;
-            coinsCollected = 0;
-            forwardSpeed = 0.5;
-            currentLane = 1;
-            reviveCount = 0;
+            gameState.score = 0;
+            gameState.alive = true;
+            gameState.reviveCount = 0;
+            playerLane = 0;
+            playerY = 0;
+            isJumping = false;
+            isRolling = false;
             
-            resetTrackAndWorld();
-            playerGroup.position.set(0, 0, 0);
-            setupCameraForGame();
-            startBackgroundMusic();
+            // Clear old obstacles/coins
+            obstacles.forEach(o => scene.remove(o));
+            coins.forEach(c => scene.remove(c));
+            obstacles = [];
+            coins = [];
+
+            // Spawn initial obstacles
+            for(let z = -20; z > -300; z -= 30) spawnRow(z);
+
+            showScreen('hud');
         }
 
+        // --- LEADERBOARD CLOUD SYNC ---
+        async function submitScore(score, coins) {
+            if (!gameState.username) return;
+            try {
+                const ref = db.collection('leaderboard').doc(gameState.username);
+                let doc = await ref.get();
+                let bestScore = score;
+                if (doc.exists && doc.data().score > score) {
+                    bestScore = doc.data().score;
+                }
+                await ref.set({
+                    name: gameState.username,
+                    score: bestScore,
+                    coins: coins,
+                    updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                fetchLeaderboard();
+            } catch(e) {
+                console.error("Leaderboard sync error:", e);
+            }
+        }
+
+        async function fetchLeaderboard() {
+            try {
+                let snapshot = await db.collection('leaderboard').orderBy('score', 'desc').limit(5).get();
+                let html = '';
+                let rank = 1;
+                snapshot.forEach(doc => {
+                    let d = doc.data();
+                    let medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+                    html += `<div class="leaderboard-item"><span>${medal} ${d.name}</span> <span><b>${d.score}</b>m</span></div>`;
+                    rank++;
+                });
+                document.getElementById('leaderboard-container').innerHTML = html || '<div class="leaderboard-item"><span>No scores yet!</span></div>';
+            } catch(e) {
+                document.getElementById('leaderboard-container').innerHTML = '<div class="leaderboard-item"><span>Connect real Firebase keys to sync!</span></div>';
+            }
+        }
+
+        // --- GAME LOOP ---
+        let clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
 
-            if (gameState === 'MENU') {
-                playerGroup.rotation.y += 0.01;
-            } else if (gameState === 'PLAYING') {
-                forwardSpeed = Math.min(forwardSpeed + 0.0001, maxSpeed);
-                distanceTraveled += forwardSpeed;
+            if (gameState.alive) {
+                gameState.score += Math.floor(gameSpeed * 2);
+                document.getElementById('hud-score').innerText = gameState.score;
+                document.getElementById('hud-coins').innerText = gameState.coins;
 
-                document.getElementById('dist-val').innerText = Math.floor(distanceTraveled);
-                document.getElementById('coin-val').innerText = coinsCollected;
-
-                const targetX = laneX[currentLane];
-                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.22;
+                // Player Physics
+                let targetX = playerLane * laneWidth;
+                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.2;
 
                 if (isJumping) {
-                    playerGroup.position.y += verticalVelocity;
-                    verticalVelocity += gravity;
-                    if (playerGroup.position.y <= 0) {
-                        playerGroup.position.y = 0;
-                        verticalVelocity = 0;
-                        isJumping = false;
+                    playerY += playerVY;
+                    playerVY -= 0.015;
+                    if (playerY <= 0) { playerY = 0; isJumping = false; }
+                }
+                playerGroup.position.y = playerY;
+                if (isRolling) bodyMesh.scale.set(1, 0.5, 1);
+                else bodyMesh.scale.set(1, 1, 1);
+
+                // Move Track & Obstacles
+                trackSegments.forEach(seg => {
+                    seg.group.position.z += gameSpeed;
+                    if (seg.group.position.z > trackLength) {
+                        seg.group.position.z -= trackSegments.length * trackLength;
                     }
-                }
+                });
 
-                playerGroup.position.z += forwardSpeed;
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    let obs = obstacles[i];
+                    obs.position.z += gameSpeed;
 
-                runAnimTime += forwardSpeed * 1.5;
-                if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
-                    leftArm.rotation.x = Math.sin(runAnimTime) * 0.7;
-                    rightArm.rotation.x = -Math.sin(runAnimTime) * 0.7;
-                    leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.8;
-                    rightLeg.rotation.x = Math.sin(runAnimTime) * 0.8;
-                }
-
-                camera.position.z = playerGroup.position.z - 9.5;
-                camera.position.x += ((playerGroup.position.x * 0.35) - camera.position.x) * 0.1;
-
-                checkAndSpawnObstacles();
-
-                const firstTile = trackTiles[0];
-                if (firstTile && playerGroup.position.z - firstTile.z > 40) {
-                    const removedTile = trackTiles.shift();
-                    scene.remove(removedTile.group);
-                    
-                    const lastTileZ = trackTiles[trackTiles.length - 1].z;
-                    spawnTrackTile(lastTileZ + 20);
-                }
-
-                for (let i = activeCoins.length - 1; i >= 0; i--) {
-                    const coin = activeCoins[i];
-                    coin.rotation.z += 0.08;
-                    if (coin.position.distanceTo(playerGroup.position) < 1.8) {
-                        scene.remove(coin);
-                        activeCoins.splice(i, 1);
-                        coinsCollected++;
-                        playSound('coin');
-                    } else if (coin.position.z < playerGroup.position.z - 10) {
-                        scene.remove(coin);
-                        activeCoins.splice(i, 1);
-                    }
-                }
-
-                for (let i = activeObstacles.length - 1; i >= 0; i--) {
-                    const obs = activeObstacles[i];
-                    const depth = obs.userData.depth || 0.4;
-                    
-                    if (Math.abs(obs.position.z - playerGroup.position.z) < (depth / 2 + 0.35) &&
-                        Math.abs(obs.position.x - playerGroup.position.x) < 1.0) {
-                        
-                        if (obs.userData.type === 'jump_only') {
-                            if (playerGroup.position.y < 0.6) triggerGameOver();
-                        } else if (obs.userData.type === 'roll_only') {
-                            if (!isSliding) triggerGameOver();
-                        } else if (obs.userData.type === 'dodge_only') {
-                            triggerGameOver();
+                    // Collision Detection
+                    if (Math.abs(obs.position.z - playerGroup.position.z) < 0.8 && obs.userData.lane === playerLane) {
+                        let hit = false;
+                        if (obs.userData.type === 'jump' && playerY < 0.5) hit = true;
+                        if (obs.userData.type === 'roll' && !isRolling) hit = true;
+                        if (hit) {
+                            gameState.alive = false;
+                            playTone(100, 'sawtooth', 0.5);
+                            document.getElementById('go-score').innerText = gameState.score;
+                            let cost = REVIVE_SCHEDULE[Math.min(gameState.reviveCount, REVIVE_SCHEDULE.length - 1)];
+                            document.getElementById('revive-cost').innerText = cost;
+                            showScreen('screen-gameover');
+                            submitScore(gameState.score, gameState.coins);
                         }
                     }
 
-                    if (obs.position.z < playerGroup.position.z - 12) {
+                    if (obs.position.z > 10) {
                         scene.remove(obs);
-                        activeObstacles.splice(i, 1);
+                        obstacles.splice(i, 1);
+                        spawnRow(-300);
+                    }
+                }
+
+                for (let i = coins.length - 1; i >= 0; i--) {
+                    let c = coins[i];
+                    c.position.z += gameSpeed;
+                    c.rotation.y += 0.05;
+
+                    if (Math.abs(c.position.z - playerGroup.position.z) < 0.8 && Math.round(c.position.x / laneWidth) === playerLane) {
+                        gameState.coins += 1;
+                        localStorage.setItem('sekato_coins', gameState.coins);
+                        playTone(800, 'sine', 0.1);
+                        scene.remove(c);
+                        coins.splice(i, 1);
+                    } else if (c.position.z > 10) {
+                        scene.remove(c);
+                        coins.splice(i, 1);
                     }
                 }
             }
 
             renderer.render(scene, camera);
         }
+        animate();
 
-        function triggerGameOver() {
-            gameState = 'GAMEOVER';
-            stopBackgroundMusic();
-            playSound('crash');
-
-            const isNewHighScore = distanceTraveled > (playerData.bestScore || 0);
-            if (isNewHighScore) {
-                playerData.bestScore = distanceTraveled;
-            }
-
-            localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
-            syncScoreToCloud();
-
-            document.getElementById('final-stats').innerText = `Distance: ${Math.floor(distanceTraveled)} m | Coins: ${coinsCollected}`;
-            document.getElementById('high-score-badge').style.display = isNewHighScore ? 'block' : 'none';
-
-            const currentReviveCost = reviveCostSchedule[Math.min(reviveCount, reviveCostSchedule.length - 1)];
-            document.getElementById('revive-btn').innerText = `REVIVE (${currentReviveCost} 🪙)`;
-            document.getElementById('gameover-screen').style.display = 'flex';
-        }
-
-        function reviveRun() {
-            const currentReviveCost = reviveCostSchedule[Math.min(reviveCount, reviveCostSchedule.length - 1)];
-            if (coinsCollected >= currentReviveCost) {
-                coinsCollected -= currentReviveCost;
-                reviveCount++;
-                gameState = 'PLAYING';
-                playerGroup.position.z += 6;
-                playerGroup.position.y = 0;
-                isJumping = false;
-                isSliding = false;
-                document.getElementById('gameover-screen').style.display = 'none';
-                startBackgroundMusic();
-            } else {
-                alert(`Not enough coins! You need ${currentReviveCost} coins to revive.`);
-            }
-        }
-
-        function restartToMenu() {
-            gameState = 'MENU';
-            stopBackgroundMusic();
-            document.getElementById('gameover-screen').style.display = 'none';
-            document.getElementById('game-hud').style.display = 'none';
-            document.getElementById('menu-screen').style.display = 'flex';
-            
-            resetTrackAndWorld();
-            buildCuteCharacter();
-            setupCameraForLobby();
-        }
-
-        function onWindowResize() {
+        window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        window.onload = initEngine;
+        });
     </script>
 </body>
 </html>
