@@ -528,7 +528,6 @@
         async function syncScoreToCloud() {
             if (!db || !playerData.name) return;
             try {
-                // Upsert unique player document in Firestore so each player appears only once with their best score
                 const playerRef = db.collection('leaderboard').doc(playerData.name.toLowerCase());
                 const doc = await playerRef.get();
                 const existingBest = doc.exists ? doc.data().km : 0;
@@ -564,7 +563,6 @@
                 }
             }
 
-            // Fallback to local storage if offline or cloud unavailable
             if (uniqueScores.length === 0 && playerData.name) {
                 uniqueScores.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
             }
@@ -926,7 +924,6 @@
             const randType = Math.random();
 
             if (randType < 0.3) {
-                // 🧱 JUMP ONLY WALL
                 const wallGroup = new THREE.Group();
                 const wallMat = new THREE.MeshLambertMaterial({ color: 0xff3300 });
                 const wall = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.1, 0.4), wallMat);
@@ -937,7 +934,6 @@
                 scene.add(wallGroup);
                 activeObstacles.push(wallGroup);
             } else if (randType < 0.6) {
-                // 🕳️ ROLL ONLY ARCH
                 const archGroup = new THREE.Group();
                 const archMat = new THREE.MeshLambertMaterial({ color: 0x00ccff });
                 const topBar = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.8, 0.4), archMat);
@@ -949,7 +945,6 @@
                 scene.add(archGroup);
                 activeObstacles.push(archGroup);
             } else {
-                // 🏢 DODGE ONLY TALL TOWER
                 const towerGroup = new THREE.Group();
                 const towerMat = new THREE.MeshLambertMaterial({ color: 0x9900cc });
                 const tower = new THREE.Mesh(new THREE.BoxGeometry(2.8, 4.5, 0.6), towerMat);
@@ -962,7 +957,6 @@
                 activeObstacles.push(towerGroup);
             }
 
-            // Spawn a generous row of coins
             const coinLane = (lane + 1) % 3;
             const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8 });
             for (let i = 0; i < 7; i++) {
