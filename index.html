@@ -106,13 +106,6 @@
             letter-spacing: 2px;
             text-shadow: 0 0 12px rgba(255, 69, 0, 0.9), 0 4px 8px rgba(0, 0, 0, 0.6);
         }
-        .subtitle {
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 600;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            margin-top: 2px;
-        }
         
         .lobby-bottom-panel {
             pointer-events: auto;
@@ -264,9 +257,8 @@
     <!-- PROFILE CREATION MODAL -->
     <div id="profile-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 28px;">CREATE PROFILE</div>
-        <div class="subtitle" style="margin-bottom: 20px;">Set your details to play as your character</div>
         
-        <div class="input-group">
+        <div class="input-group" style="margin-top: 20px;">
             <label>Player Name</label>
             <input type="text" id="input-name" placeholder="Enter your name" maxlength="12">
         </div>
@@ -294,7 +286,6 @@
     <div id="menu-screen">
         <div class="header-title-box">
             <div class="modal-title">SEKATO RUNNER</div>
-            <div class="subtitle">3D Mobile Parkour Game</div>
         </div>
 
         <div class="lobby-bottom-panel">
@@ -316,8 +307,8 @@
     <!-- GAME OVER SCREEN -->
     <div id="gameover-screen" class="modal" style="display: none;">
         <div class="modal-title" style="color: #ff1744;">GAME OVER</div>
-        <div id="high-score-badge" style="color: #ffd700; font-size: 20px; margin: 8px 0; font-weight: 800; display: none;">🎉 CONGRATULATIONS YOU GOT A HIGH SCORE!</div>
-        <div class="subtitle" id="final-stats" style="font-size: 16px; margin: 10px 0;">Distance: 0.0 km | Coins: 0</div>
+        <div id="high-score-badge" style="color: #ffd700; font-size: 20px; margin: 8px 0; font-weight: 800; display: none;">🎉 HIGH SCORE!</div>
+        <div class="subtitle" id="final-stats" style="font-size: 16px; margin: 10px 0; color: #fff;">Distance: 0.0 km | Coins: 0</div>
 
         <button class="btn" id="revive-btn" onclick="reviveRun()" style="background: linear-gradient(45deg, #00b0ff, #00e676); margin-bottom: 10px;">REVIVE (20 🪙)</button>
         <button class="btn" style="background: #333; box-shadow: none;" onclick="restartToMenu()">MAIN MENU</button>
@@ -633,26 +624,26 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // NORMAL DIRECT TOUCH SWIPE MAPPING:
-            // Swiping RIGHT (dx > 8) shifts character to the Right lane (currentLane++)
-            // Swiping LEFT (dx < -8) shifts character to the Left lane (currentLane--)
+            // FIXED NON-INVERTED TOUCH SWIPE CONTROLS:
+            // Swiping finger RIGHT (dx > 15) -> Increases lane index (moves Right)
+            // Swiping finger LEFT (dx < -15) -> Decreases lane index (moves Left)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 8 && currentLane < 2) {
-                        currentLane++; // Swipe Right -> move right (+3.2)
-                    } else if (dx < -8 && currentLane > 0) {
-                        currentLane--; // Swipe Left -> move left (-3.2)
+                    if (dx > 15 && currentLane < 2) {
+                        currentLane++; // Swipe Right -> Move Right (+3.2)
+                    } else if (dx < -15 && currentLane > 0) {
+                        currentLane--; // Swipe Left -> Move Left (-3.2)
                     }
                 } else {
-                    if (dy < -8 && !isJumping && !isSliding) {
+                    if (dy < -15 && !isJumping && !isSliding) {
                         isJumping = true; 
                         verticalVelocity = jumpPower; 
                         playSound('jump');
-                    } else if (dy > 8) {
+                    } else if (dy > 15) {
                         triggerSlide(); 
                     }
                 }
@@ -958,7 +949,7 @@
                 document.getElementById('coin-val').innerText = coinsCollected;
 
                 const targetX = laneX[currentLane];
-                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.92;
+                playerGroup.position.x += (targetX - playerGroup.position.x) * 0.22;
 
                 if (isJumping) {
                     playerGroup.position.y += verticalVelocity;
@@ -1122,4 +1113,3 @@
     </script>
 </body>
 </html>
-
