@@ -100,7 +100,7 @@
         }
         .modal-title {
             color: #ffffff;
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -112,10 +112,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             width: 100%;
             max-width: 380px;
-            background: rgba(15, 25, 40, 0.85);
+            background: rgba(15, 25, 40, 0.88);
             padding: 16px;
             border-radius: 20px;
             backdrop-filter: blur(8px);
@@ -152,9 +152,9 @@
             border: none;
             border-radius: 30px;
             color: #fff;
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 900;
-            padding: 14px 0;
+            padding: 13px 0;
             width: 100%;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
@@ -168,7 +168,7 @@
         }
         .btn-secondary {
             background: #2a3b50;
-            font-size: 14px;
+            font-size: 13px;
             padding: 9px 0;
             box-shadow: none;
             border: 1px solid #4a6b88;
@@ -182,13 +182,48 @@
             width: 100%;
             height: 100%;
             z-index: 30;
-            background: rgba(15, 25, 40, 0.94);
+            background: rgba(15, 25, 40, 0.95);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             padding: 20px;
             pointer-events: auto;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 320px;
+            background: #18283b;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #324a66;
+            margin-bottom: 12px;
+        }
+        .setting-label {
+            color: #00ffcc;
+            font-weight: 800;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .toggle-btn {
+            background: #ff4500;
+            color: #fff;
+            font-weight: 900;
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: none;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .toggle-btn.off {
+            background: #3a4f66;
+            color: #aaa;
         }
 
         .input-group {
@@ -254,6 +289,24 @@
         </div>
     </div>
 
+    <!-- CONTROL SETTINGS MODAL -->
+    <div id="controls-modal" class="modal" style="display: none;">
+        <div class="modal-title" style="font-size: 26px; color: #00ffcc;">⚙️ CONTROL SETTINGS</div>
+        <div style="margin-bottom: 20px; color:#aaa; font-size:12px;">Configure your preferred movement options</div>
+
+        <div class="setting-row">
+            <span class="setting-label">Inverted Controls</span>
+            <button class="toggle-btn off" id="toggle-invert" onclick="toggleInvertedSetting()">OFF</button>
+        </div>
+
+        <div class="setting-row">
+            <span class="setting-label">Enable Side Taps</span>
+            <button class="toggle-btn" id="toggle-sidetap" onclick="toggleSideTapSetting()">ON</button>
+        </div>
+
+        <button class="btn" onclick="closeControlsModal()" style="margin-top: 15px;">SAVE & BACK</button>
+    </div>
+
     <!-- PROFILE CREATION MODAL -->
     <div id="profile-modal" class="modal" style="display: none;">
         <div class="modal-title" style="font-size: 28px;">CREATE PROFILE</div>
@@ -297,7 +350,8 @@
             </div>
 
             <button class="btn" onclick="startGame()">START RUN</button>
-            <div style="display: flex; gap: 8px; width: 100%;">
+            <div style="display: flex; gap: 6px; width: 100%;">
+                <button class="btn btn-secondary" onclick="openControlsModal()">🎮 CONTROLS</button>
                 <button class="btn btn-secondary" onclick="openLeaderboard()">🏆 SCORES</button>
                 <button class="btn btn-secondary" onclick="editProfile()">👤 PROFILE</button>
             </div>
@@ -308,7 +362,7 @@
     <div id="gameover-screen" class="modal" style="display: none;">
         <div class="modal-title" style="color: #ff1744;">GAME OVER</div>
         <div id="high-score-badge" style="color: #ffd700; font-size: 20px; margin: 8px 0; font-weight: 800; display: none;">🎉 HIGH SCORE!</div>
-        <div class="subtitle" id="final-stats" style="font-size: 16px; margin: 10px 0; color: #fff;">Distance: 0.0 km | Coins: 0</div>
+        <div id="final-stats" style="font-size: 16px; margin: 10px 0; color: #fff; font-weight:700;">Distance: 0.0 km | Coins: 0</div>
 
         <button class="btn" id="revive-btn" onclick="reviveRun()" style="background: linear-gradient(45deg, #00b0ff, #00e676); margin-bottom: 10px;">REVIVE (20 🪙)</button>
         <button class="btn" style="background: #333; box-shadow: none;" onclick="restartToMenu()">MAIN MENU</button>
@@ -322,7 +376,6 @@
         let gameState = 'MENU';
 
         let currentLane = 1; 
-        // LANE X POSITIONS: Left Lane = -3.2, Center Lane = 0, Right Lane = +3.2
         const laneX = [-3.2, 0, 3.2]; 
         let forwardSpeed = 0.48;
         const maxSpeed = 1.05;
@@ -352,15 +405,53 @@
         let playerData = {
             name: "Sekato",
             gender: "Male",
+            invertedControls: false,
+            sideTapsEnabled: true,
             scores: []
         };
 
-        function previewGenderSelection(genderVal) {
-            if (genderVal === 'Female') {
-                selectedCharacter = 'Aika';
+        function openControlsModal() {
+            updateControlsUI();
+            document.getElementById('controls-modal').style.display = 'flex';
+        }
+
+        function closeControlsModal() {
+            localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
+            document.getElementById('controls-modal').style.display = 'none';
+        }
+
+        function toggleInvertedSetting() {
+            playerData.invertedControls = !playerData.invertedControls;
+            updateControlsUI();
+        }
+
+        function toggleSideTapSetting() {
+            playerData.sideTapsEnabled = !playerData.sideTapsEnabled;
+            updateControlsUI();
+        }
+
+        function updateControlsUI() {
+            const invBtn = document.getElementById('toggle-invert');
+            if (playerData.invertedControls) {
+                invBtn.innerText = 'ON';
+                invBtn.classList.remove('off');
             } else {
-                selectedCharacter = 'Sekato';
+                invBtn.innerText = 'OFF';
+                invBtn.classList.add('off');
             }
+
+            const tapBtn = document.getElementById('toggle-sidetap');
+            if (playerData.sideTapsEnabled) {
+                tapBtn.innerText = 'ON';
+                tapBtn.classList.remove('off');
+            } else {
+                tapBtn.innerText = 'OFF';
+                tapBtn.classList.add('off');
+            }
+        }
+
+        function previewGenderSelection(genderVal) {
+            selectedCharacter = (genderVal === 'Female') ? 'Aika' : 'Sekato';
             updateCharacterLobbyCard();
             if (characterMeshGroup) buildCuteCharacter();
         }
@@ -369,21 +460,18 @@
             const saved = localStorage.getItem('SekatoRunner_Profile');
             if (saved) {
                 try {
-                    playerData = JSON.parse(saved);
+                    playerData = Object.assign(playerData, JSON.parse(saved));
                 } catch(e) {}
             } else {
                 document.getElementById('profile-modal').style.display = 'flex';
             }
             applyGenderToCharacter();
             updateHUDLabels();
+            updateControlsUI();
         }
 
         function applyGenderToCharacter() {
-            if (playerData.gender === 'Female') {
-                selectedCharacter = 'Aika';
-            } else {
-                selectedCharacter = 'Sekato';
-            }
+            selectedCharacter = (playerData.gender === 'Female') ? 'Aika' : 'Sekato';
             updateCharacterLobbyCard();
             if (characterMeshGroup) buildCuteCharacter();
         }
@@ -624,36 +712,58 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED NON-INVERTED TOUCH SWIPE CONTROLS:
-            // Swiping finger RIGHT (dx > 15) -> Increases lane index (moves Right)
-            // Swiping finger LEFT (dx < -15) -> Decreases lane index (moves Left)
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
-                if (Math.abs(dx) > Math.abs(dy)) {
-                    if (dx > 15 && currentLane < 2) {
-                        currentLane++; // Swipe Right -> Move Right (+3.2)
-                    } else if (dx < -15 && currentLane > 0) {
-                        currentLane--; // Swipe Left -> Move Left (-3.2)
+                const isSwipe = Math.abs(dx) > 15 || Math.abs(dy) > 15;
+
+                if (isSwipe) {
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        let moveDirection = dx > 0 ? 1 : -1;
+                        if (playerData.invertedControls) moveDirection *= -1;
+
+                        if (moveDirection > 0 && currentLane < 2) {
+                            currentLane++; // Move Right
+                        } else if (moveDirection < 0 && currentLane > 0) {
+                            currentLane--; // Move Left
+                        }
+                    } else {
+                        if (dy < -15 && !isJumping && !isSliding) {
+                            isJumping = true; 
+                            verticalVelocity = jumpPower; 
+                            playSound('jump');
+                        } else if (dy > 15) {
+                            triggerSlide(); 
+                        }
                     }
-                } else {
-                    if (dy < -15 && !isJumping && !isSliding) {
-                        isJumping = true; 
-                        verticalVelocity = jumpPower; 
-                        playSound('jump');
-                    } else if (dy > 15) {
-                        triggerSlide(); 
-                    }
+                } else if (playerData.sideTapsEnabled) {
+                    // Tap on screen sides
+                    let tapX = e.changedTouches[0].clientX;
+                    let halfWidth = window.innerWidth / 2;
+                    let moveDirection = tapX > halfWidth ? 1 : -1;
+                    if (playerData.invertedControls) moveDirection *= -1;
+
+                    if (moveDirection > 0 && currentLane < 2) currentLane++;
+                    else if (moveDirection < 0 && currentLane > 0) currentLane--;
                 }
             }, {passive: true});
 
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
-                if ((e.key === 'ArrowLeft' || e.key === 'a') && currentLane > 0) currentLane--;
-                if ((e.key === 'ArrowRight' || e.key === 'd') && currentLane < 2) currentLane++;
+                let isLeft = (e.key === 'ArrowLeft' || e.key === 'a');
+                let isRight = (e.key === 'ArrowRight' || e.key === 'd');
+
+                if (playerData.invertedControls) {
+                    let temp = isLeft;
+                    isLeft = isRight;
+                    isRight = temp;
+                }
+
+                if (isLeft && currentLane > 0) currentLane--;
+                if (isRight && currentLane < 2) currentLane++;
                 if ((e.key === 'ArrowUp' || e.key === 'w') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
