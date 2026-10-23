@@ -399,22 +399,21 @@
     </div>
 
     <script>
-        // FIREBASE CLOUD CONFIGURATION (Linked to sekato-chess project)
+        // FIREBASE CLOUD CONFIGURATION (Linked to sekato-runner project)
         const firebaseConfig = {
-            apiKey: "YOUR_ACTUAL_API_KEY", 
-            authDomain: "sekato-chess.firebaseapp.com",
-            projectId: "sekato-chess",
-            storageBucket: "sekato-chess.firebasestorage.app",
-            messagingSenderId: "105772827014",
-            appId: "YOUR_ACTUAL_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+            apiKey: "AIzaSyCMzkmGlDUTGD-GSqz0ClIyRs1xUTg6Xyk",
+            authDomain: "sekato-runner.firebaseapp.com",
+            projectId: "sekato-runner",
+            storageBucket: "sekato-runner.firebasestorage.app",
+            messagingSenderId: "479452830068",
+            appId: "1:479452830068:web:4ed6d1d59bbe5dec8d3421",
+            measurementId: "G-R9JHC0TG5F"
         };
         
         let db = null;
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
-            // Enable offline persistence so saved players display offline too
             db.enablePersistence({ synchronizeTabs: true }).catch(err => {
                 console.warn("Firestore persistence notice:", err.code);
             });
@@ -545,8 +544,6 @@
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
             document.getElementById('profile-modal').style.display = 'none';
             applyGenderToCharacter();
-            
-            // Sync player profile immediately upon creation so they show in the global list right away
             syncProfileToCloud();
         }
 
@@ -594,7 +591,7 @@
             }
         }
 
-        // TIERED LEAGUE RANKINGS SYSTEM (Ranks #1, #2, #3, #4, #5...)
+        // TIERED LEAGUE RANKINGS SYSTEM
         async function openLeaderboard() {
             document.getElementById('leaderboard-modal').style.display = 'flex';
             const container = document.getElementById('leaderboard-list');
@@ -604,7 +601,6 @@
 
             if (db) {
                 try {
-                    // Fetch all registered players ordered by high score (highest to lowest)
                     const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(100).get();
                     snapshot.forEach(doc => {
                         players.push(doc.data());
@@ -614,7 +610,6 @@
                 }
             }
 
-            // Ensure current player is included if missing
             if (playerData.name && !players.some(p => p.name.toLowerCase() === playerData.name.toLowerCase())) {
                 players.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
                 players.sort((a, b) => (b.km || 0) - (a.km || 0));
@@ -626,7 +621,6 @@
                 return;
             }
 
-            // Define Tier Brackets based on global numerical rankings (#1, #2, #3...)
             const tiers = [
                 { name: '🏆 Champion', className: 'league-champion', start: 0, end: 0 },
                 { name: '🥇 Gold League', className: 'league-gold', start: 1, end: 2 },
@@ -647,7 +641,7 @@
                 section.appendChild(header);
 
                 tierPlayers.forEach((player, idx) => {
-                    const actualRank = tier.start + idx + 1; // Gives 1, 2, 3, 4, 5, 6, 7...
+                    const actualRank = tier.start + idx + 1;
                     const isMe = player.name.toLowerCase() === (playerData.name || "").toLowerCase();
 
                     const row = document.createElement('div');
