@@ -414,6 +414,10 @@
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
+            // Enable offline persistence so saved players display offline too
+            db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+                console.warn("Firestore persistence notice:", err.code);
+            });
         } catch(e) {
             console.warn("Firebase initialized in offline fallback mode.");
         }
@@ -541,7 +545,9 @@
             localStorage.setItem('SekatoRunner_Profile', JSON.stringify(playerData));
             document.getElementById('profile-modal').style.display = 'none';
             applyGenderToCharacter();
-            syncScoreToCloud();
+            
+            // Sync player profile immediately upon creation so they show in the global list right away
+            syncProfileToCloud();
         }
 
         function editProfile() {
@@ -550,12 +556,30 @@
             document.getElementById('profile-modal').style.display = 'flex';
         }
 
+        async function syncProfileToCloud() {
+            if (!db || !playerData.name) return;
+            try {
+                const playerRef = db.collection('leaderboard').doc(playerData.name.toLowerCase());
+                const doc = await playerRef.get();
+                const existingBest = doc.exists ? (doc.data().km || 0) : 0;
+                
+                await playerRef.set({
+                    name: playerData.name,
+                    gender: playerData.gender,
+                    km: Math.max(playerData.bestScore || 0, existingBest),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } catch (e) {
+                console.warn("Profile cloud sync skipped:", e);
+            }
+        }
+
         async function syncScoreToCloud() {
             if (!db || !playerData.name) return;
             try {
                 const playerRef = db.collection('leaderboard').doc(playerData.name.toLowerCase());
                 const doc = await playerRef.get();
-                const existingBest = doc.exists ? doc.data().km : 0;
+                const existingBest = doc.exists ? (doc.data().km || 0) : 0;
                 
                 if (playerData.bestScore > existingBest) {
                     await playerRef.set({
@@ -563,14 +587,14 @@
                         gender: playerData.gender,
                         km: playerData.bestScore,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    }, { merge: true });
                 }
             } catch (e) {
-                console.warn("Cloud sync skipped:", e);
+                console.warn("Cloud score sync skipped:", e);
             }
         }
 
-        // TIERED LEAGUE RANKINGS SYSTEM
+        // TIERED LEAGUE RANKINGS SYSTEM (Ranks #1, #2, #3, #4, #5...)
         async function openLeaderboard() {
             document.getElementById('leaderboard-modal').style.display = 'flex';
             const container = document.getElementById('leaderboard-list');
@@ -580,17 +604,20 @@
 
             if (db) {
                 try {
-                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(30).get();
+                    // Fetch all registered players ordered by high score (highest to lowest)
+                    const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(100).get();
                     snapshot.forEach(doc => {
                         players.push(doc.data());
                     });
                 } catch (e) {
-                    console.warn("Firestore fetch error, falling back to local storage");
+                    console.warn("Firestore fetch error, falling back to cached/local storage");
                 }
             }
 
-            if (players.length === 0 && playerData.name) {
+            // Ensure current player is included if missing
+            if (playerData.name && !players.some(p => p.name.toLowerCase() === playerData.name.toLowerCase())) {
                 players.push({ name: playerData.name, gender: playerData.gender, km: playerData.bestScore || 0 });
+                players.sort((a, b) => (b.km || 0) - (a.km || 0));
             }
 
             container.innerHTML = '';
@@ -599,7 +626,7 @@
                 return;
             }
 
-            // Define Tier Brackets based on global rankings
+            // Define Tier Brackets based on global numerical rankings (#1, #2, #3...)
             const tiers = [
                 { name: '🏆 Champion', className: 'league-champion', start: 0, end: 0 },
                 { name: '🥇 Gold League', className: 'league-gold', start: 1, end: 2 },
@@ -620,14 +647,14 @@
                 section.appendChild(header);
 
                 tierPlayers.forEach((player, idx) => {
-                    const actualRank = tier.start + idx + 1;
+                    const actualRank = tier.start + idx + 1; // Gives 1, 2, 3, 4, 5, 6, 7...
                     const isMe = player.name.toLowerCase() === (playerData.name || "").toLowerCase();
 
                     const row = document.createElement('div');
                     row.className = `leaderboard-row ${isMe ? 'is-me' : ''}`;
                     row.innerHTML = `
-                        <span><span class="player-rank">#${actualRank}</span> ${player.name} (${player.gender === 'Male' ? '♂' : '♀'}) ${isMe ? '(Me)' : ''}</span>
-                        <span>⭐ ${Math.floor(player.km)} m</span>
+                        <span><span class="player-rank">#${actualRank}</span> ${player.name} (${player.gender === 'Female' ? '♀' : '♂'}) ${isMe ? '(Me)' : ''}</span>
+                        <span>⭐ ${Math.floor(player.km || 0)} m</span>
                     `;
                     section.appendChild(row);
                 });
