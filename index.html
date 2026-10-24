@@ -793,7 +793,7 @@
 
             window.addEventListener('resize', onWindowResize);
             
-            // UNIFIED POINTER EVENTS (Works reliably in both Chrome and App Wrappers)
+            // ROBUST POINTER / TOUCH HANDLERS FOR APP WRAPPER
             window.addEventListener('pointerdown', e => {
                 initAudio();
                 touchStartX = e.clientX;
@@ -807,7 +807,8 @@
                 let dx = e.clientX - touchStartX;
                 let dy = e.clientY - touchStartY;
 
-                if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+                // Threshold set to 15px for instant reaction to swipes
+                if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
                     if (e.cancelable) e.preventDefault();
                     swipeProcessed = true;
 
@@ -823,11 +824,11 @@
                             currentLane--;
                         }
                     } else {
-                        if (dy < -20 && !isJumping && !isSliding) {
+                        if (dy < -15 && !isJumping && !isSliding) {
                             isJumping = true; 
                             verticalVelocity = jumpPower; 
                             playSound('jump');
-                        } else if (dy > 20 && !isSliding) {
+                        } else if (dy > 15 && !isSliding) {
                             triggerSlide(); 
                         }
                     }
@@ -899,7 +900,7 @@
             leftLeg.geometry.translate(0, -0.25, 0);
             charRoot.add(leftLeg);
 
-            const rightLeg = new THREE.Mesh(legGeo, darkMat);
+            rightLeg = new THREE.Mesh(legGeo, darkMat);
             rightLeg.position.set(0.13, 0.5, 0);
             rightLeg.geometry.translate(0, -0.25, 0);
             charRoot.add(rightLeg);
@@ -1080,12 +1081,13 @@
 
                 playerGroup.position.z += forwardSpeed;
 
-                runAnimTime += forwardSpeed * 1.5;
+                // FIXED RUNNING ANIMATION (Swings limbs smoothly during gameplay)
+                runAnimTime += 0.15;
                 if (leftArm && rightArm && leftLeg && rightLeg && !isJumping && !isSliding) {
-                    leftArm.rotation.x = Math.sin(runAnimTime) * 0.7;
-                    rightArm.rotation.x = -Math.sin(runAnimTime) * 0.7;
-                    leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.8;
-                    rightLeg.rotation.x = Math.sin(runAnimTime) * 0.8;
+                    leftArm.rotation.x = Math.sin(runAnimTime) * 0.8;
+                    rightArm.rotation.x = -Math.sin(runAnimTime) * 0.8;
+                    leftLeg.rotation.x = -Math.sin(runAnimTime) * 0.9;
+                    rightLeg.rotation.x = Math.sin(runAnimTime) * 0.9;
                 }
 
                 camera.position.z = playerGroup.position.z - 9.5;
