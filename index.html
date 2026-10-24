@@ -798,13 +798,16 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
-            // FIXED SWIPE CONTROLS WITH BOUNDARY CHECKS
+            // FIXED SWIPE CONTROLS WITH PREVENTDEFAULT TO STOP BROWSER RELOADS/BACK GESTURES
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
+                
                 let dx = e.changedTouches[0].clientX - touchStartX;
                 let dy = e.changedTouches[0].clientY - touchStartY;
                 
                 if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+                    e.preventDefault(); // Stop browser from interpreting swipe as back/reload
+                    
                     if (Math.abs(dx) > Math.abs(dy)) {
                         let moveDirection = dx > 0 ? 1 : -1;
                         if (playerData.invertedControls) {
@@ -826,9 +829,8 @@
                         }
                     }
                 }
-            }, {passive: true});
+            }, {passive: false}); // Set to false so preventDefault() works smoothly
 
-            // FIXED KEYBOARD CONTROLS WITH BOUNDARY CHECKS
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
