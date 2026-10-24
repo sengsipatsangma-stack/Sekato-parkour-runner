@@ -793,22 +793,22 @@
 
             window.addEventListener('resize', onWindowResize);
             
-            window.addEventListener('touchstart', e => {
+            // UNIFIED POINTER EVENTS (Works reliably in both Chrome and App Wrappers)
+            window.addEventListener('pointerdown', e => {
                 initAudio();
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
+                touchStartX = e.clientX;
+                touchStartY = e.clientY;
                 swipeProcessed = false;
             }, {passive: true});
 
-            // FIXED RESPONSIVE TOUCH MOVEMENT (Triggers instantly on swipe movement)
-            window.addEventListener('touchmove', e => {
+            window.addEventListener('pointermove', e => {
                 if (gameState !== 'PLAYING' || swipeProcessed) return;
 
-                let dx = e.touches[0].clientX - touchStartX;
-                let dy = e.touches[0].clientY - touchStartY;
+                let dx = e.clientX - touchStartX;
+                let dy = e.clientY - touchStartY;
 
-                if (Math.abs(dx) > 25 || Math.abs(dy) > 25) {
-                    e.preventDefault();
+                if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+                    if (e.cancelable) e.preventDefault();
                     swipeProcessed = true;
 
                     if (Math.abs(dx) > Math.abs(dy)) {
@@ -823,11 +823,11 @@
                             currentLane--;
                         }
                     } else {
-                        if (dy < -25 && !isJumping && !isSliding) {
+                        if (dy < -20 && !isJumping && !isSliding) {
                             isJumping = true; 
                             verticalVelocity = jumpPower; 
                             playSound('jump');
-                        } else if (dy > 25 && !isSliding) {
+                        } else if (dy > 20 && !isSliding) {
                             triggerSlide(); 
                         }
                     }
@@ -899,7 +899,7 @@
             leftLeg.geometry.translate(0, -0.25, 0);
             charRoot.add(leftLeg);
 
-            rightLeg = new THREE.Mesh(legGeo, darkMat);
+            const rightLeg = new THREE.Mesh(legGeo, darkMat);
             rightLeg.position.set(0.13, 0.5, 0);
             rightLeg.geometry.translate(0, -0.25, 0);
             charRoot.add(rightLeg);
@@ -1144,7 +1144,7 @@
 
         function triggerGameOver() {
             gameState = 'GAMEOVER';
-            stopBackgroundMusic(); // Instantly stops music loop on game over
+            stopBackgroundMusic();
             playSound('crash');
 
             const isNewHighScore = distanceTraveled > (playerData.bestScore || 0);
@@ -1182,7 +1182,7 @@
 
         function restartToMenu() {
             gameState = 'MENU';
-            stopBackgroundMusic(); // Instantly cuts music loop when returning to main menu
+            stopBackgroundMusic();
             document.getElementById('gameover-screen').style.display = 'none';
             document.getElementById('game-hud').style.display = 'none';
             document.getElementById('menu-screen').style.display = 'flex';
