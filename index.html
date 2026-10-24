@@ -252,7 +252,6 @@
             outline: none;
         }
 
-        /* Tiered League Leaderboard Styles */
         .leaderboard-box {
             width: 100%;
             max-width: 340px;
@@ -300,7 +299,6 @@
         .player-rank { font-weight: 900; margin-right: 6px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Firebase App & Firestore SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
@@ -399,7 +397,6 @@
     </div>
 
     <script>
-        // FIREBASE CLOUD CONFIGURATION (Linked to sekato-runner project)
         const firebaseConfig = {
             apiKey: "AIzaSyCMzkmGlDUTGD-GSqz0ClIyRs1xUTg6Xyk",
             authDomain: "sekato-runner.firebaseapp.com",
@@ -414,12 +411,8 @@
         try {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
-            db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-                console.warn("Firestore persistence notice:", err.code);
-            });
-        } catch(e) {
-            console.warn("Firebase initialized in offline fallback mode.");
-        }
+            db.enablePersistence({ synchronizeTabs: true }).catch(err => {});
+        } catch(e) {}
 
         let scene, camera, renderer;
         let playerGroup, characterMeshGroup;
@@ -566,9 +559,7 @@
                     km: Math.max(playerData.bestScore || 0, existingBest),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-            } catch (e) {
-                console.warn("Profile cloud sync skipped:", e);
-            }
+            } catch (e) {}
         }
 
         async function syncScoreToCloud() {
@@ -586,12 +577,9 @@
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
                 }
-            } catch (e) {
-                console.warn("Cloud score sync skipped:", e);
-            }
+            } catch (e) {}
         }
 
-        // TIERED LEAGUE RANKINGS SYSTEM
         async function openLeaderboard() {
             document.getElementById('leaderboard-modal').style.display = 'flex';
             const container = document.getElementById('leaderboard-list');
@@ -602,12 +590,8 @@
             if (db) {
                 try {
                     const snapshot = await db.collection('leaderboard').orderBy('km', 'desc').limit(100).get();
-                    snapshot.forEach(doc => {
-                        players.push(doc.data());
-                    });
-                } catch (e) {
-                    console.warn("Firestore fetch error, falling back to cached/local storage");
-                }
+                    snapshot.forEach(doc => { players.push(doc.data()); });
+                } catch (e) {}
             }
 
             if (playerData.name && !players.some(p => p.name.toLowerCase() === playerData.name.toLowerCase())) {
@@ -714,20 +698,6 @@
             }
         }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopBackgroundMusic();
-                if (audioCtx) audioCtx.suspend();
-            } else {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                if (gameState === 'PLAYING' && !audioMuted) {
-                    startBackgroundMusic();
-                }
-            }
-        });
-
         function playSound(type) {
             if (!audioCtx || audioMuted) return;
             try {
@@ -828,6 +798,7 @@
                 touchStartY = e.touches[0].clientY;
             }, {passive: true});
 
+            // FIXED SWIPE CONTROLS WITH BOUNDARY CHECKS
             window.addEventListener('touchend', e => {
                 if (gameState !== 'PLAYING') return;
                 let dx = e.changedTouches[0].clientX - touchStartX;
@@ -840,8 +811,11 @@
                             moveDirection *= -1; 
                         }
 
-                        if (moveDirection > 0 && currentLane < 2) currentLane++;
-                        else if (moveDirection < 0 && currentLane > 0) currentLane--;
+                        if (moveDirection > 0 && currentLane < 2) {
+                            currentLane++;
+                        } else if (moveDirection < 0 && currentLane > 0) {
+                            currentLane--;
+                        }
                     } else {
                         if (dy < -15 && !isJumping && !isSliding) {
                             isJumping = true; 
@@ -854,6 +828,7 @@
                 }
             }, {passive: true});
 
+            // FIXED KEYBOARD CONTROLS WITH BOUNDARY CHECKS
             window.addEventListener('keydown', e => {
                 initAudio();
                 if (gameState !== 'PLAYING') return;
@@ -868,6 +843,7 @@
 
                 if (isLeft && currentLane > 0) currentLane--;
                 if (isRight && currentLane < 2) currentLane++;
+                
                 if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === ' ') && !isJumping && !isSliding) { 
                     isJumping = true; 
                     verticalVelocity = jumpPower; 
